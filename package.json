@@ -1,0 +1,20 @@
+{
+  "name": "eatmi-pwa",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Prosty serwer Express do hostingu statycznej PWA eatmi na Railway",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "dependencies": {
+    "compression": "^1.7.4",
+    "express": "^4.19.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
