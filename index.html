@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <title>eatmi.pl — Dowóz jedzenia dla firm i osób prywatnych</title>
+  <meta name="description" content="eatmi.pl — szybki i wygodny dowóz jedzenia. Jedno konto: zamówienia dla domu i całego zespołu. Prosty cennik, przejrzyste faktury, ulubione restauracje." />
+  <meta property="og:title" content="eatmi.pl — Dowóz jedzenia dla firm i osób prywatnych" />
+  <meta property="og:description" content="Zamawiaj dla siebie lub całej firmy. Jedna faktura, przejrzyste budżety i szybkie dostawy." />
+  <meta property="og:type" content="website" />
+  <meta property="og:image" content="https://dummyimage.com/1200x630/facc15/111827&text=eatmi.pl" />
+
+  <!-- PWA -->
+  <meta name="theme-color" content="#facc15" />
+  <link rel="manifest" href="/manifest.webmanifest" crossorigin="use-credentials" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="eatmi" />
+  <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+
+  <!-- Tailwind + fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Inter', 'ui-sans-serif','system-ui'] },
+          colors: {
+            brand: {
+              primary: '#facc15',
+              secondary: '#16a34a',
+              dark: '#0f172a',
+            }
+          },
+          boxShadow: { soft: '0 8px 24px rgba(2, 6, 23, 0.08)' }
+        }
+      }
+    }
+  </script>
+  <style>
+    html { scroll-behavior: smooth; }
+    .glass { backdrop-filter: saturate(140%) blur(8px); background: rgba(255,255,255,0.7); }
+    .safe-container { max-width: 1152px; }
+    .liquid { position: relative; background: linear-gradient(180deg, rgba(255,255,255,0.55), rgba(255,255,255,0.35)); border: 1px solid rgba(255, 255, 255, 0.5); box-shadow: 0 10px 30px rgba(2,6,23,0.08), inset 0 1px 0 rgba(255,255,255,0.35); backdrop-filter: blur(18px) saturate(140%); -webkit-backdrop-filter: blur(18px) saturate(140%); overflow: hidden; }
+    .liquid::before { content: ""; position: absolute; inset: 0; background: radial-gradient(120% 100% at 10% 0%, rgba(255,255,255,0.55) 0%, rgba(255,255,255,0) 45%), linear-gradient(180deg, rgba(255,255,255,0.15), rgba(255,255,255,0)); pointer-events: none; mix-blend-mode: screen; }
+    .liquid-border { border: 1px solid rgba(255,255,255,0.65); }
+    .has-bottomnav { padding-bottom: calc(96px + env(safe-area-inset-bottom)); }
+    #bottomNav .nav-shell { position: relative; overflow: visible; }
+    #bottomNav .nav-rail { position: relative; display: grid; grid-template-columns: repeat(5, 1fr); gap: .25rem; padding: .25rem; }
+    #bottomNav .nav-btn { position: relative; -webkit-tap-highlight-color: transparent; border-radius: 16px; padding: .65rem .75rem; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .25rem; font-size: 11px; line-height: 1; color: #334155; transition: transform .18s cubic-bezier(.2,.9,.2,1), color .2s ease; overflow: hidden; isolation: isolate; }
+    #bottomNav .nav-btn svg { transition: transform .35s cubic-bezier(.22,1,.23,1), opacity .35s ease; opacity:.9; }
+    #bottomNav .nav-btn:hover svg { transform: translateY(-2px) scale(1.05); opacity:1; }
+    #bottomNav .nav-btn[aria-current="true"], #bottomNav .nav-btn[data-active="true"] { color: #0f172a; }
+    #bottomNav .indicator { position: absolute; top: 4px; bottom: 4px; width: 56px; border-radius: 18px; background: linear-gradient(180deg, rgba(255,255,255,.7), rgba(255,255,255,.35)); border: 1px solid rgba(255,255,255,.65); box-shadow: 0 10px 30px rgba(2,6,23,.08), inset 0 1px 0 rgba(255,255,255,.5); backdrop-filter: blur(18px) saturate(160%); -webkit-backdrop-filter: blur(18px) saturate(160%); transform: translateX(0); transition: transform .45s cubic-bezier(.22,1,.23,1), width .3s ease; z-index: 0; }
+    #bottomNav .nav-btn.is-featured{ background: rgba(250,204,21,.28); border: 1px solid rgba(250,204,21,.45); box-shadow: inset 0 1px 0 rgba(255,255,255,.35); }
+    #bottomNav .nav-btn.is-featured:hover{ background: rgba(250,204,21,.38); }
+    #bottomNav .nav-btn.is-featured[aria-current="true"]{ background: rgba(250,204,21,.5); }
+    .ripple { position:absolute; border-radius:9999px; transform: scale(0); opacity:.45; background: rgba(15,23,42,.15); animation:ripple .6s ease-out forwards; pointer-events:none; }
+    @keyframes ripple { to{ transform: scale(6); opacity:0; } }
+  </style>
+</head>
+<body class="bg-white text-slate-900 font-sans has-bottomnav pb-24">
+  <!-- Header -->
+  <header class="sticky top-0 z-40 liquid bg-white/30 border-b border-white/60">
+    <div class="mx-auto safe-container px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-16">
+        <a href="#hero" class="flex items-center gap-2 group">
+          <div class="h-8 w-8 rounded-xl bg-brand-primary grid place-items-center shadow-soft">
+            <span class="font-extrabold">e</span>
+          </div>
+          <div class="leading-tight">
+            <div class="font-extrabold text-lg tracking-tight">eatmi<span class="text-brand-secondary">.pl</span></div>
+            <div class="text-[11px] text-slate-500 -mt-1">dla firm i osób prywatnych</div>
+          </div>
+        </a>
+        <nav class="hidden md:flex items-center gap-6 text-sm text-slate-700">
+          <a href="#how" class="hover:text-slate-900">Jak to działa</a>
+          <a href="#business" class="hover:text-slate-900">Dla firm</a>
+          <a href="#home" class="hover:text-slate-900">Dla domu</a>
+          <a href="#pricing" class="hover:text-slate-900">Top z menu</a>
+          <a href="#menu" class="hover:text-slate-900 font-semibold">Menu</a>
+          <a href="#contact" class="hover:text-slate-900">Kontakt</a>
+        </nav>
+        <div class="hidden md:flex items-center gap-3">
+          <a href="#menu" class="px-4 py-2 rounded-xl text-sm font-semibold border border-slate-200 hover:border-slate-300">Zamów teraz</a>
+          <a href="#business" class="px-4 py-2 rounded-xl text-sm font-semibold bg-brand-primary hover:brightness-95 shadow-soft">Dla firm</a>
+        </div>
+        <button id="mobileBtn" class="md:hidden p-2 rounded-xl border border-slate-200">
+          <span class="sr-only">Menu</span>
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+        </button>
+      </div>
+      <div id="mobileMenu" class="md:hidden hidden pb-4">
+        <div class="grid gap-2 text-sm">
+          <a href="#how" class="px-3 py-2 rounded-lg hover:bg-white">Jak to działa</a>
+          <a href="#business" class="px-3 py-2 rounded-lg hover:bg-white">Dla firm</a>
+          <a href="#home" class="px-3 py-2 rounded-lg hover:bg-white">Dla domu</a>
+          <a href="#pricing" class="px-3 py-2 rounded-lg hover:bg-white">Top z menu</a>
+          <a href="#menu" class="px-3 py-2 rounded-lg hover:bg-white font-semibold">Menu</a>
+          <a href="#contact" class="px-3 py-2 rounded-lg hover:bg-white">Kontakt</a>
+        </div>
+        <div class="mt-3 flex gap-2">
+          <a href="#menu" class="flex-1 px-4 py-2 rounded-xl text-sm font-semibold border border-slate-200 text-center">Zamów teraz</a>
+          <a href="#business" class="flex-1 px-4 py-2 rounded-xl text-sm font-semibold bg-brand-primary text-center">Dla firm</a>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero / Order -->
+  <section id="hero" class="relative overflow-hidden">
+    <div class="absolute inset-0 bg-gradient-to-b from-brand-primary/40 via-transparent to-transparent pointer-events-none"></div>
+    <div class="mx-auto safe-container px-4 sm:px-6 lg:px-8 py-16 sm:py-24">
+      <div class="grid lg:grid-cols-2 gap-10 items-center">
+        <div>
+          <div class="inline-flex items-center gap-2 rounded-full bg-slate-900 text-white/95 px-3 py-1 text-[12px]">
+            <span class="inline-block h-2 w-2 rounded-full bg-brand-primary"></span>
+            Dostawy w 35–55 min w Twoim mieście
+          </div>
+          <h1 class="mt-4 text-4xl sm:text-5xl font-extrabold tracking-tight leading-[1.1]">
+            Zamawiaj <span class="underline decoration-brand-primary decoration-8 underline-offset-4">dla domu</span> i <span class="text-brand-secondary">dla całej firmy</span> — w jednym miejscu
+          </h1>
+          <p class="mt-4 text-slate-600 text-lg">eatmi.pl łączy ulubione restauracje z prostym rozliczaniem. Jedno konto, jasne budżety, faktury zbiorcze i szybkie dostawy.</p>
+
+          <!-- Order bar -->
+          <div id="order" class="mt-6 liquid rounded-2xl p-2 border border-white/50 shadow-soft">
+            <div class="grid">
+              <button id="quickOrder" class="group relative w-full px-6 py-5 rounded-2xl text-base sm:text-lg font-semibold text-slate-900 bg-brand-primary shadow-soft hover:brightness-95 transition-transform duration-300 active:scale-[0.99]">
+                <span class="relative z-10">Zamów posiłek</span>
+                <span class="pointer-events-none absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity" style="background: radial-gradient(120% 100% at 20% 0%, rgba(255,255,255,.6), rgba(255,255,255,0) 50%), linear-gradient(180deg, rgba(255,255,255,.2), rgba(255,255,255,0));"></span>
+              </button>
+            </div>
+            <p id="addressSaved" class="hidden mt-2 text-sm text-slate-500">Adres zapisany. Pokażemy lokale w pobliżu.</p>
+          </div>
+
+          <div class="mt-5 flex items-center gap-6 text-sm text-slate-500">
+            <div class="flex items-center gap-2"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4"/></svg> 300+ restauracji</div>
+            <div class="flex items-center gap-2"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> Fv dla firm</div>
+            <div class="flex items-center gap-2"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3"/></svg> Live-tracking</div>
+          </div>
+        </div>
+        <div class="relative">
+          <div class="relative rounded-3xl border border-slate-200 bg-white p-4 shadow-soft">
+            <img src="https://images.unsplash.com/photo-1550547660-d9450f859349?q=80&w=1200&auto=format&fit=crop" alt="Zestaw lunchowy" class="rounded-2xl object-cover w-full h-[420px]">
+            <div class="absolute -bottom-6 left-6 right-6 bg-white rounded-2xl p-4 shadow-soft border border-slate-200">
+              <div class="flex items-center justify-between">
+                <div>
+                  <div class="font-semibold">Twoja dostawa jest w drodze</div>
+                  <div class="text-sm text-slate-500">Kur. Maja • 18 min</div>
+                </div>
+                <button class="px-3 py-2 rounded-xl text-sm font-semibold bg-slate-900 text-white">Śledź</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- How it works -->
+  <section id="how" class="py-16 sm:py-24">
+    <div class="mx-auto safe-container px-4 sm:px-6 lg:px-8">
+      <div class="text-center max-w-2xl mx-auto">
+        <h2 class="text-3xl sm:text-4xl font-extrabold tracking-tight">Jak to działa</h2>
+        <p class="mt-3 text-slate-600">Prosty proces w 3 krokach — dla domu i dla biura.</p>
+      </div>
+      <div class="mt-10 grid md:grid-cols-3 gap-6">
+        <div class="p-6 rounded-2xl border border-slate-200 bg-white shadow-soft">
+          <div class="h-10 w-10 rounded-xl bg-brand-primary grid place-items-center mb-4">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 21l-6-6"/><circle cx="10" cy="10" r="7"/></svg>
+          </div>
+          <h3 class="font-semibold text-lg">Podaj adres</h3>
+          <p class="text-slate-600 mt-1">Wpisz adres i wybierz porę dostawy. Pokażemy najbliższe restauracje.</p>
+        </div>
+        <div class="p-6 rounded-2xl border border-slate-200 bg-white shadow-soft">
+          <div class="h-10 w-10 rounded-xl bg-brand-primary grid place-items-center mb-4">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3h18v4H3z"/><path d="M3 7l1.5 12h15L21 7"/><path d="M8 10h8"/></svg>
+          </div>
+          <h3 class="font-semibold text-lg">Wybierz dania</h3>
+          <p class="text-slate-600 mt-1">Zamawiaj pojedyncze posiłki lub zestawy. Dodaj do koszyka i zapłać online.</p>
+        </div>
+        <div class="p-6 rounded-2xl border border-slate-200 bg-white shadow-soft">
+          <div class="h-10 w-10 rounded-xl bg-brand-primary grid place-items-center mb-4">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 13h13l3 3H3z"/><path d="M5 13V8a3 3 0 0 1 3-3h6a3 3 0 0 1 3 3v5"/></svg>
+          </div>
+          <h3 class="font-semibold text-lg">Śledź dostawę</h3>
+          <p class="text-slate-600 mt-1">Aktualizacje w czasie rzeczywistym i wsparcie 7 dni w tygodniu.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Business -->
+  <section id="business" class="py-16 sm:py-24 bg-slate-50 border-y border-slate-100">
+    <div class="mx-auto safe-container px-4 sm:px-6 lg:px-8">
+      <div class="grid lg:grid-cols-2 gap-10 items-center">
+        <div>
+          <h2 class="text-3xl sm:text-4xl font-extrabold tracking-tight">Dla firm: prosty catering pracowniczy</h2>
+          <p class="mt-3 text-slate-600">Zadbaj o lunch w biurze bez umów na lata. Budżety per osoba, kalendarze zamówień, faktury zbiorcze i raporty.</p>
+          <ul class="mt-6 grid gap-3 text-slate-700">
+            <li class="flex items-start gap-3"><span class="mt-1 h-6 w-6 rounded-xl bg-brand-primary grid place-items-center"><svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M5 13l4 4L19 7"/></svg></span><span><strong>Budżety i limity</strong> — dzienne/tygodniowe, z automatycznym rozliczaniem.</span></li>
+            <li class="flex items-start gap-3"><span class="mt-1 h-6 w-6 rounded-xl bg-brand-primary grid place-items-center"><svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M5 13l4 4L19 7"/></svg></span><span><strong>Jedna faktura</strong> — koniec z rozliczaniem paragonów.</span></li>
+            <li class="flex items-start gap-3"><span class="mt-1 h-6 w-6 rounded-xl bg-brand-primary grid place-items-center"><svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M5 13l4 4L19 7"/></svg></span><span><strong>Strefy biurowe</strong> — dostawy zsynchronizowane czasowo dla całego piętra.</span></li>
+            <li class="flex items-start gap-3"><span class="mt-1 h-6 w-6 rounded-xl bg-brand-primary grid place-items-center"><svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M5 13l4 4L19 7"/></svg></span><span><strong>API / SSO</strong> — integracje z HRIS i Slack/Teams.</span></li>
+          </ul>
+          <div class="mt-6 flex flex-wrap gap-3">
+            <a href="#contact" class="px-5 py-3 rounded-xl bg-slate-900 text-white font-semibold hover:opacity-95">Umów demo</a>
+            <a href="#pricing" class="px-5 py-3 rounded-xl border border-slate-300 font-semibold">Zobacz top 3</a>
+          </div>
+        </div>
+        <div class="relative">
+          <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-soft">
+            <div class="flex items-center justify-between">
+              <div>
+                <div class="text-sm text-slate-500">Plan firmy</div>
+                <div class="text-2xl font-extrabold">Budżet lunchowy: 30 zł/os.</div>
+              </div>
+              <span class="px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 text-sm border border-emerald-200">Aktywny</span>
+            </div>
+            <div class="mt-4 grid grid-cols-2 gap-4 text-sm">
+              <div class="p-4 rounded-xl border border-slate-200">
+                <div class="text-slate-500">Zespół</div>
+                <div class="font-semibold">42 osoby</div>
+              </div>
+              <div class="p-4 rounded-xl border border-slate-200">
+                <div class="text-slate-500">Zamówienia dziś</div>
+                <div class="font-semibold">36</div>
+              </div>
+              <div class="p-4 rounded-xl border border-slate-200">
+                <div class="text-slate-500">Śr. czas dostawy</div>
+                <div class="font-semibold">41 min</div>
+              </div>
+              <div class="p-4 rounded-xl border border-slate-200">
+                <div class="text-slate-500">Oszczędność miesiąc</div>
+                <div class="font-semibold">1 840 zł</div>
+              </div>
+            </div>
+            <div class="mt-4 p-4 rounded-xl bg-slate-50 border border-slate-200 text-sm">
+              <strong>Raporty CSV/PDF</strong> wysyłane 1-go dnia miesiąca o 9:00. Integracje: SAP, enova, Teta.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Home -->
+  <section id="home" class="py-16 sm:py-24">
+    <div class="mx-auto safe-container px-4 sm:px-6 lg:px-8">
+      <div class="max-w-2xl">
+        <h2 class="text-3xl sm:text-4xl font-extrabold tracking-tight">Dla domu: szybko, świeżo, lokalnie</h2>
+        <p class="mt-3 text-slate-600">Zapisz adres raz — a my zajmiemy się resztą. Promki, ulubione i śledzenie dostawy na żywo.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Top 3 -->
+  <section id="pricing" class="py-16 sm:py-24 bg-slate-50 border-y border-slate-100">
+    <div class="mx-auto safe-container px-4 sm:px-6 lg:px-8">
+      <div class="text-center max-w-2xl mx-auto">
+        <h2 class="text-3xl sm:text-4xl font-extrabold tracking-tight">Top 3 z menu</h2>
+        <p class="mt-3 text-slate-600">Najlepiej oceniane pozycje. Dodaj do koszyka jednym kliknięciem.</p>
+      </div>
+      <div id="pricingTop" class="mt-10 grid lg:grid-cols-3 gap-6"></div>
+      <div class="mt-6 text-center">
+        <a href="#menu" class="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-slate-900 text-white font-semibold hover:opacity-95">
+          Zobacz całe menu
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- MENU -->
+  <section id="menu" class="py-16 sm:py-24">
+    <div class="mx-auto safe-container px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between gap-4">
+        <div>
+          <h2 class="text-3xl sm:text-4xl font-extrabold tracking-tight">Menu</h2>
+          <p class="mt-2 text-slate-600">Wybierz dania i dodaj do koszyka. Płatność: karta/Blik/Apple Pay.</p>
+        </div>
+        <a href="#cart" id="cartBtn" class="relative px-4 py-2 rounded-xl border border-slate-200 font-semibold hover:border-slate-300">
+          Koszyk <span id="cartCount" class="ml-2 inline-flex items-center justify-center min-w-[1.75rem] h-7 text-sm rounded-full bg-brand-primary px-2">0</span>
+        </a>
+      </div>
+      <div class="mt-8 grid sm:grid-cols-2 lg:grid-cols-3 gap-6" id="menuGrid"></div>
+    </div>
+  </section>
+
+  <!-- Testimonials -->
+  <section class="py-16 sm:py-24">
+    <div class="mx-auto safe-container px-4 sm:px-6 lg:px-8">
+      <div class="grid lg:grid-cols-3 gap-6 items-stretch">
+        <div class="lg:col-span-1">
+          <h2 class="text-3xl sm:text-4xl font-extrabold tracking-tight">Firmy nas lubią</h2>
+          <p class="mt-3 text-slate-600">„W końcu jedna faktura i koniec z paragonami”. „Zespół naprawdę lubi czwartkowe lunche”.</p>
+        </div>
+        <div class="lg:col-span-2 grid md:grid-cols-2 gap-6">
+          <figure class="p-6 rounded-2xl border border-slate-200 bg-white shadow-soft">
+            <blockquote class="text-slate-700">„Przeszliśmy z tradycyjnego cateringu i oszczędzamy czas w księgowości.”</blockquote>
+            <figcaption class="mt-4 text-sm text-slate-500">Agnieszka, HR Manager • 70 os.</figcaption>
+          </figure>
+          <figure class="p-6 rounded-2xl border border-slate-200 bg-white shadow-soft">
+            <blockquote class="text-slate-700">„Dostawy punktualnie na 12:00 dla całego piętra — sztos.”</blockquote>
+            <figcaption class="mt-4 text-sm text-slate-500">Michał, Office • 120 os.</figcaption>
+          </figure>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section class="py-16 sm:py-24 bg-slate-50 border-y border-slate-100">
+    <div class="mx-auto safe-container px-4 sm:px-6 lg:px-8">
+      <h2 class="text-3xl sm:text-4xl font-extrabold tracking-tight text-center">FAQ</h2>
+      <div class="mt-8 max-w-3xl mx-auto grid gap-3">
+        <details class="p-4 rounded-xl border border-slate-200 bg-white">
+          <summary class="font-semibold cursor-pointer">Czy wystawiacie fakturę dla firmy?</summary>
+          <p class="mt-2 text-slate-600">Tak, dla planów firmowych wystawiamy faktury zbiorcze miesięcznie lub tygodniowo.</p>
+        </details>
+        <details class="p-4 rounded-xl border border-slate-200 bg-white">
+          <summary class="font-semibold cursor-pointer">Jakie są godziny dostaw?</summary>
+          <p class="mt-2 text-slate-600">Zwykle 10:00–22:00. W większych miastach także w nocy.</p>
+        </details>
+        <details class="p-4 rounded-xl border border-slate-200 bg-white">
+          <summary class="font-semibold cursor-pointer">Czy mogę zamawiać na kilka adresów?</summary>
+          <p class="mt-2 text-slate-600">Tak — konta firmowe wspierają wiele lokalizacji i strefy biurowe.</p>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <!-- Contact -->
+  <section id="contact" class="py-16 sm:py-24">
+    <div class="mx-auto safe-container px-4 sm:px-6 lg:px-8">
+      <div class="grid lg:grid-cols-2 gap-10 items-center">
+        <div>
+          <h2 class="text-3xl sm:text-4xl font-extrabold tracking-tight">Porozmawiajmy</h2>
+          <p class="mt-3 text-slate-600">Zostaw kontakt — oddzwonimy i pomożemy uruchomić plan firmowy w 24h.</p>
+          <form class="mt-6 grid gap-3" onsubmit="event.preventDefault(); submitContact();">
+            <input type="text" id="cname" required placeholder="Imię i nazwisko" class="px-4 py-3 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-brand-primary">
+            <input type="email" id="cemail" required placeholder="E-mail służbowy" class="px-4 py-3 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-brand-primary">
+            <input type="tel" id="cphone" placeholder="Telefon (opcjonalnie)" class="px-4 py-3 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-brand-primary">
+            <textarea id="cmsg" placeholder="Napisz kilka słów..." rows="4" class="px-4 py-3 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-brand-primary"></textarea>
+            <button type="submit" class="px-5 py-3 rounded-xl bg-slate-900 text-white font-semibold w-full sm:w-auto">Wyślij</button>
+          </form>
+          <p id="contactConf" class="hidden mt-3 text-sm text-emerald-700">Dziękujemy! Odezwiemy się niebawem.</p>
+        </div>
+        <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-soft">
+          <h3 class="font-semibold">Dane firmy</h3>
+          <div class="mt-3 text-sm text-slate-700">
+            <p><strong>eatmi sp. z o.o.</strong></p>
+            <p>ul. Przykładowa 1, 00-000 Miasto</p>
+            <p>NIP: 0000000000</p>
+            <p>E-mail: <a class="underline" href="mailto:kontakt@eatmi.pl">kontakt@eatmi.pl</a></p>
+            <p>Telefon: <a class="underline" href="tel:+48111222333">+48 111 222 333</a></p>
+          </div>
+          <div class="mt-4 p-4 rounded-xl bg-slate-50 border border-slate-200 text-sm">
+            Poszukujesz integracji lub oferty niestandardowej? Napisz do nas — przygotujemy propozycję w 24h.
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="py-10 border-t border-slate-200">
+    <div class="mx-auto safe-container px-4 sm:px-6 lg:px-8">
+      <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
+        <div>
+          <div class="font-extrabold text-lg">eatmi<span class="text-brand-secondary">.pl</span></div>
+          <p class="text-sm text-slate-500">© <span id="year"></span> eatmi. Wszelkie prawa zastrzeżone.</p>
+        </div>
+        <div class="text-sm text-slate-600 flex flex-wrap gap-4">
+          <a href="#" class="hover:underline">Regulamin</a>
+          <a href="#" class="hover:underline">Polityka prywatności</a>
+          <a href="#contact" class="hover:underline">Kontakt</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Bottom Floating Nav -->
+  <nav id="bottomNav" class="fixed inset-x-0 bottom-2 z-50">
+    <div class="mx-auto safe-container px-4">
+      <div class="nav-shell liquid rounded-3xl border border-white/50 shadow-soft px-2 py-2">
+        <div class="indicator" style="left:8px; width:56px"></div>
+        <div class="nav-rail">
+          <a href="#hero" class="nav-btn" data-key="hero" aria-label="Start">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11l9-8 9 8"/><path d="M4 10v10h16V10"/></svg>
+            <span class="mt-1">Start</span>
+          </a>
+          <a href="#menu" class="nav-btn" data-key="order" aria-label="Menu">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.3-4.3"/></svg>
+            <span class="mt-1">Menu</span>
+          </a>
+          <a href="#business" class="nav-btn is-featured" data-key="business" aria-label="Firma">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21V7a2 2 0 0 1 2-2h3l2-2h4l2 2h3a2 2 0 0 1 2 2v14z"/></svg>
+            <span class="mt-1">Firma</span>
+          </a>
+          <a href="#pricing" class="nav-btn" data-key="pricing" aria-label="Top 3">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M3 12h18"/><path d="M3 18h18"/></svg>
+            <span class="mt-1">Top 3</span>
+          </a>
+          <a href="#contact" class="nav-btn" data-key="contact" aria-label="Kontakt">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92V19a2 2 0 0 1-2.18 2A19.79 19.79 0 0 1 3 5.18 2 2 0 0 1 5 3h2.09a2 2 0 0 1 2 1.72c.12.86.31 1.7.57 2.5a2 2 0 0 1-.45 2.11L8.09 10.91a16 16 0 0 0 5 5l1.58-1.12a2 2 0 0 1 2.11-.45c.8.26 1.64.45 2.5.57A2 2 0 0 1 22 16.92z"/></svg>
+            <span class="mt-1">Kontakt</span>
+          </a>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Scripts -->
+  <script>
+    // --- MENU DATA ---
+    const menuItems = [
+      { id: 'm1', name: 'Pad Thai kurczak', price: 34.90, desc: 'Makaron ryżowy, sos tamaryndowy, orzeszki, limonka', img: 'https://images.unsplash.com/photo-1604909052743-86b0e30c3d98?q=80&w=1200&auto=format&fit=crop', rating: 4.9, featured: true },
+      { id: 'm2', name: 'Burger wołowy 200g', price: 32.00, desc: 'Ser cheddar, aioli, ogórek, frytki', img: 'https://images.unsplash.com/photo-1550547660-d9450f859349?q=80&w=1200&auto=format&fit=crop', rating: 4.8, featured: true },
+      { id: 'm3', name: 'Sałatka cezar', price: 27.50, desc: 'Kurczak, parmezan, grzanki, sos cezar', img: 'https://images.unsplash.com/photo-1551183053-bf91a1d81141?q=80&w=1200&auto=format&fit=crop', rating: 4.7, featured: true },
+      { id: 'm4', name: 'Ramen tonkotsu', price: 39.00, desc: 'Bulion wieprzowy, chashu, jajko ajitsuke', img: 'https://images.unsplash.com/photo-1604908176997-4313d9952a81?q=80&w=1200&auto=format&fit=crop', rating: 4.9 },
+      { id: 'm5', name: 'Pierogi ruskie', price: 24.90, desc: 'Tradycyjne, okraszone cebulką', img: 'https://images.unsplash.com/photo-1604908553956-e0f2f8a185da?q=80&w=1200&auto=format&fit=crop', rating: 4.6 },
+      { id: 'm6', name: 'Margherita 32 cm', price: 29.90, desc: 'Sos pomidorowy, mozzarella, bazylia', img: 'https://images.unsplash.com/photo-1548365328-8b7f2b3b5b56?q=80&w=1200&auto=format&fit=crop', rating: 4.5 },
+      { id: 'm7', name: 'Kebab w picie', price: 25.00, desc: 'Wołowina/kurczak, warzywa, sosy', img: 'https://images.unsplash.com/photo-1601050690597-9d5a0f7f9f09?q=80&w=1200&auto=format&fit=crop', rating: 4.4 },
+      { id: 'm8', name: 'Sushi zestaw 16', price: 59.00, desc: 'Nigiri + maki, imbir, wasabi', img: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?q=80&w=1200&auto=format&fit=crop', rating: 4.8 },
+    ];
+
+    // --- UTILS: CART ---
+    const CART_KEY = 'eatmi_cart';
+    const getCart = () => JSON.parse(localStorage.getItem(CART_KEY) || '[]');
+    const setCart = (c) => { localStorage.setItem(CART_KEY, JSON.stringify(c)); updateCartBadge(); };
+    function addToCart(id){
+      const item = menuItems.find(i => i.id === id);
+      if(!item) return;
+      const cart = getCart();
+      const existing = cart.find(c => c.id === id);
+      if(existing) existing.qty += 1; else cart.push({ id, name: item.name, price: item.price, qty: 1 });
+      setCart(cart);
+      if (navigator.vibrate) try{ navigator.vibrate(8); }catch{}
+    }
+    function updateCartBadge(){
+      const count = getCart().reduce((a,c)=>a+c.qty,0);
+      const el = document.getElementById('cartCount');
+      if(el) el.textContent = count;
+    }
+
+    // --- RENDER: MENU GRID ---
+    function renderMenu(){
+      const grid = document.getElementById('menuGrid');
+      grid.innerHTML = menuItems.map(i => `
+        <article class="p-4 rounded-2xl border border-slate-200 bg-white shadow-soft flex flex-col">
+          <img src="${i.img}" alt="${i.name}" class="rounded-xl h-40 w-full object-cover" loading="lazy">
+          <div class="mt-3 flex-1">
+            <h3 class="font-semibold">${i.name}</h3>
+            <p class="text-sm text-slate-600 mt-1">${i.desc}</p>
+          </div>
+          <div class="mt-4 flex items-center justify-between">
+            <div class="text-lg font-extrabold">${i.price.toFixed(2).replace('.', ',')} zł</div>
+            <button data-add="${i.id}" class="px-3 py-2 rounded-xl bg-brand-primary font-semibold">Dodaj</button>
+          </div>
+        </article>
+      `).join('');
+      grid.querySelectorAll('[data-add]').forEach(btn => btn.addEventListener('click', () => addToCart(btn.dataset.add)));
+    }
+
+    // --- RENDER: TOP 3 (pricing section) ---
+    function renderTop3(){
+      const top = menuItems.filter(i=>i.featured).slice(0,3);
+      const wrap = document.getElementById('pricingTop');
+      wrap.innerHTML = top.map((i,idx)=>`
+        <div class="p-6 rounded-2xl border ${idx===1? 'border-2 border-slate-900':''} bg-white shadow-soft flex flex-col">
+          ${idx===1? '<span class="-mt-3 mb-2 self-end px-3 py-1 rounded-full bg-brand-primary text-xs font-semibold border border-yellow-300">Najczęściej wybierany</span>' : ''}
+          <div class="text-sm text-slate-500">${idx===0? 'Nasza rekomendacja' : idx===1? 'Hit zamówień' : 'Klasyk'}</div>
+          <div class="text-2xl font-extrabold mt-1">${i.name}</div>
+          <p class="mt-2 text-slate-600 text-sm">${i.desc}</p>
+          <div class="mt-4 flex items-center justify-between">
+            <div class="text-xl font-extrabold">${i.price.toFixed(2).replace('.', ',')} zł</div>
+            <button data-addtop="${i.id}" class="px-4 py-2 rounded-xl bg-slate-900 text-white font-semibold">Dodaj</button>
+          </div>
+        </div>
+      `).join('');
+      wrap.querySelectorAll('[data-addtop]').forEach(btn => btn.addEventListener('click', () => addToCart(btn.dataset.addtop)));
+    }
+
+    // Mobile menu toggle
+    const mobileBtn = document.getElementById('mobileBtn');
+    const mobileMenu = document.getElementById('mobileMenu');
+    mobileBtn?.addEventListener('click', () => { mobileMenu.classList.toggle('hidden'); });
+
+    // Contact mock
+    function submitContact(){
+      const payload = {
+        name: document.getElementById('cname').value,
+        email: document.getElementById('cemail').value,
+        phone: document.getElementById('cphone').value,
+        msg: document.getElementById('cmsg').value
+      };
+      console.log('Contact form payload (send to your API):', payload);
+      document.getElementById('contactConf').classList.remove('hidden');
+      setTimeout(()=>document.getElementById('contactConf').classList.add('hidden'), 4000);
+    }
+    window.submitContact = submitContact;
+
+    // Year
+    document.getElementById('year').textContent = new Date().getFullYear();
+
+    // Quick CTA -> menu
+    const quickOrder = document.getElementById('quickOrder');
+    quickOrder?.addEventListener('click', () => {
+      location.hash = '#menu';
+      document.getElementById('menu').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+
+    // Simple reveal on scroll
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.remove('opacity-0','translate-y-3');
+          entry.target.classList.add('opacity-100','translate-y-0');
+        }
+      })
+    }, { threshold: 0.12 });
+
+    document.querySelectorAll('section, figure, .p-6').forEach((el) => {
+      el.classList.add('opacity-0','translate-y-3','transition','duration-700');
+      observer.observe(el);
+    });
+
+    // Bottom nav active state
+    const nav = document.getElementById('bottomNav');
+    const navLinks = Array.from(nav.querySelectorAll('.nav-btn'));
+    const targets = ['#hero','#menu','#business','#pricing','#contact']
+      .map(sel => document.querySelector(sel))
+      .filter(Boolean);
+
+    const activeById = (id) => {
+      navLinks.forEach(a => {
+        const href = a.getAttribute('href');
+        a.setAttribute('aria-current', href === `#${id}`);
+        a.dataset.active = (href === `#${id}`);
+      });
+    };
+
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach(e => { if (e.isIntersecting) activeById(e.target.id); })
+    }, { threshold: 0.6 });
+
+    targets.forEach(t => io.observe(t));
+
+    // Sliding indicator + active states
+    const rail = document.querySelector('#bottomNav .nav-rail');
+    const indicator = document.querySelector('#bottomNav .indicator');
+    const btns = Array.from(document.querySelectorAll('#bottomNav .nav-btn'));
+
+    function moveIndicator(el){
+      const shellRect = rail.getBoundingClientRect();
+      const rect = el.getBoundingClientRect();
+      const width = Math.max(56, Math.min(120, rect.width));
+      indicator.style.width = width + 'px';
+      indicator.style.transform = `translateX(${rect.left - shellRect.left}px)`;
+    }
+
+    function setActiveByHref(hash){
+      const match = btns.find(b => b.getAttribute('href') === hash);
+      if (!match) return;
+      btns.forEach(b => { b.removeAttribute('aria-current'); b.dataset.active = 'false'; });
+      match.setAttribute('aria-current','true');
+      match.dataset.active = 'true';
+      moveIndicator(match);
+    }
+
+    requestAnimationFrame(() => setActiveByHref('#hero'));
+
+    btns.forEach(b => {
+      b.addEventListener('click', (e) => {
+        const r = document.createElement('span'); r.className = 'ripple';
+        const rect = b.getBoundingClientRect();
+        r.style.left = (e.clientX - rect.left) + 'px';
+        r.style.top = (e.clientY - rect.top) + 'px';
+        b.appendChild(r); setTimeout(()=>r.remove(), 650);
+        if (navigator.vibrate) try{ navigator.vibrate(6); }catch{}
+        b.classList.add('pop'); setTimeout(()=>b.classList.remove('pop'), 220);
+        setActiveByHref(b.getAttribute('href'));
+      }, { passive: true });
+      b.addEventListener('mouseenter', () => { moveIndicator(b); });
+      b.addEventListener('mouseleave', () => { const current = document.querySelector('#bottomNav .nav-btn[aria-current="true"]') || btns[0]; moveIndicator(current); });
+    });
+
+    const io2 = new IntersectionObserver((entries) => {
+      entries.forEach(e => { if (e.isIntersecting) setActiveByHref('#'+e.target.id); })
+    }, { threshold: 0.6 });
+    targets.forEach(t => io2.observe(t));
+
+    addEventListener('resize', () => { const current = document.querySelector('#bottomNav .nav-btn[aria-current="true"]') || btns[0]; moveIndicator(current); });
+
+    // Init renders
+    renderMenu();
+    renderTop3();
+    updateCartBadge();
+  </script>
+
+  <!-- PWA: rejestracja SW + minimalne A2HS -->
+  <script>
+    // Rejestracja service workera
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js', { scope: '/' })
+          .then(reg => {
+            reg.addEventListener('updatefound', () => {
+              const nw = reg.installing;
+              nw?.addEventListener('statechange', () => {
+                if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+                  console.log('[PWA] Nowa wersja gotowa — odśwież, aby zaktualizować.');
+                }
+              });
+            });
+          })
+          .catch(err => console.error('[PWA] SW register error:', err));
+      });
+    }
+
+    // A2HS hook (opcjonalnie możesz dodać własny przycisk i wywołać deferredPrompt.prompt())
+    let deferredPrompt;
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      console.log('[PWA] beforeinstallprompt gotowy');
+    });
+    window.addEventListener('appinstalled', () => console.log('[PWA] Zainstalowano'));
+  </script>
+</body>
+</html>
