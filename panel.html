@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>eatmi • Panel zarządzania</title>
+  <meta name="color-scheme" content="light only">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: { yellow:'#FFC107', dark:'#111827', light:'#F9FAFB' },
+            cat: { slone:'#F59E0B', slodkie:'#EC4899', zdrowe:'#10B981', napoj:'#3B82F6' }
+          },
+          boxShadow: { soft:'0 10px 30px rgba(0,0,0,.08)' },
+          borderRadius: { xl2:'1.25rem' }
+        }
+      }
+    }
+  </script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script crossorigin src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    html{scroll-behavior:smooth}
+    .input{border:1px solid #e5e7eb;border-radius:.75rem;padding:.65rem .9rem;width:100%}
+    .btn{display:inline-flex;align-items:center;justify-content:center;gap:.5rem;border-radius:.75rem;padding:.6rem 1rem;font-weight:600}
+    .btn-primary{background:#FFC107;color:#111827}
+    .btn-ghost{background:#fff;border:1px solid #e5e7eb}
+    .card{background:#fff;border:1px solid #e5e7eb;border-radius:1rem;padding:1rem}
+    .sidebar a.active{background:#111827;color:#fff}
+    .table{width:100%}
+    .table th,.table td{padding:.6rem .5rem;border-bottom:1px solid #eee;font-size:.92rem}
+    .pill{border:1px solid #e5e7eb;border-radius:999px;padding:.15rem .5rem;font-size:.75rem}
+  </style>
+</head>
+<body class="bg-brand-light text-gray-900">
+  <div id="app"></div>
+
+  <script type="text/babel">
+    const {useState,useEffect,useMemo} = React;
+
+    // --- Storage helpers ---
+    const LS_KEY = 'eatmi-admin-state';
+    const ORDERS_KEY = 'eatmi-orders'; // index.html może tu dopisywać zamówienia
+
+    const loadState = () => { try { return JSON.parse(localStorage.getItem(LS_KEY)) || null } catch { return null } }
+    const saveState = (st) => { localStorage.setItem(LS_KEY, JSON.stringify(st)) }
+
+    // --- Domyślny stan: teraz z creatorBoxes (pełne reguły) ---
+    const defaultState = {
+      happyHour: { enabled:true, message:'🎉 Dziś −15% z kodem HAPPY15 do 15:00' },
+      // nowe: konfigurowalne boxy do kreatora
+      creatorBoxes: [
+        { id:'1', name:'Box 1', price:32, limits:{ slone:1, slodkie:1, zdrowe:0, napoj:1 } },
+        { id:'2', name:'Box 2', price:39, limits:{ slone:1, slodkie:1, zdrowe:1, napoj:1 } },
+        { id:'3', name:'Box 3', price:49, limits:{ slone:2, slodkie:1, zdrowe:2, napoj:1 } },
+      ],
+      readyBoxes: [
+        { id:'rb1', name:'Protein Power', price:39, items:['Beef Classic','Sałatka Caesar','Woda 0,5l'] },
+        { id:'rb2', name:'Sweet&Salty',   price:35, items:['Chicken Burger','Brownie','Lemoniada'] },
+      ],
+      products: {
+        slone:   [{id:'burger-chicken', name:'Chicken Burger', desc:'kurczak, miód-muszt.', img:'https://images.unsplash.com/photo-1606756790138-261d2b21cd75?q=80&w=800&auto=format&fit=crop'},
+                  {id:'burger-beef',    name:'Beef Classic',   desc:'wołowina, cheddar',   img:'https://images.unsplash.com/photo-1550317138-10000687a72b?q=80&w=800&auto=format&fit=crop'}],
+        slodkie: [{id:'brownie', name:'Brownie', desc:'gęste, czekoladowe', img:'https://images.unsplash.com/photo-1541782814453-c5f53aa5d3c5?q=80&w=800&auto=format&fit=crop'}],
+        zdrowe:  [{id:'salad-caesar', name:'Sałatka Caesar', desc:'kurczak, parmezan', img:'https://images.unsplash.com/photo-1568605114967-8130f3a36994?q=80&w=800&auto=format&fit=crop'}],
+        napoj:   [{id:'woda', name:'Woda 0,5l', desc:'gaz./niegaz.', img:'https://images.unsplash.com/photo-1502741338009-cac2772e18bc?q=80&w=800&auto=format&fit=crop'}],
+      },
+      employees: [
+        { id:'e-1', name:'Owner', role:'owner', code:'0051' },
+        { id:'e-2', name:'Anna – Obsługa', role:'staff', code:'1111' },
+      ]
+    };
+
+    // --- Utils ---
+    const currency = (n) => new Intl.NumberFormat('pl-PL', {style:'currency', currency:'PLN'}).format(n||0);
+    const todayISO = () => new Date().toISOString().slice(0,10);
+
+    // --- App ---
+    function App(){
+      const [state, setState] = useState(()=> loadState() || defaultState);
+      const [logged, setLogged] = useState(()=> {
+        try { return JSON.parse(sessionStorage.getItem('eatmi-admin-auth')) || null } catch { return null }
+      });
+      useEffect(()=> saveState(state), [state]);
+      const logout = () => { setLogged(null); sessionStorage.removeItem('eatmi-admin-auth') }
+      if(!logged) return <Login state={state} onLogin={(user)=>{ setLogged(user); sessionStorage.setItem('eatmi-admin-auth', JSON.stringify(user)) }} />
+      return <Panel state={state} setState={setState} logged={logged} onLogout={logout} />
+    }
+
+    // --- Login ---
+    function Login({state, onLogin}){
+      const [code, setCode] = useState(''); const [err, setErr] = useState('');
+      const tryLogin = () => {
+        const emp = state.employees.find(e => e.code === code.trim());
+        if(!emp){ setErr('Nieprawidłowy kod.'); return; }
+        onLogin({ id: emp.id, name: emp.name, role: emp.role });
+      }
+      useEffect(()=>{ lucide.createIcons(); });
+      return (
+        <div className="min-h-screen grid place-items-center px-4">
+          <div className="card w-full max-w-md">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 rounded-xl grid place-items-center bg-brand-yellow"><i data-lucide="lock" className="w-5 h-5"></i></div>
+              <h1 className="text-xl font-extrabold">Panel zarządzania</h1>
+            </div>
+            <label className="text-sm text-gray-600 mb-1 block">Wprowadź kod dostępu</label>
+            <input className="input" placeholder="np. 0051" value={code} onChange={e=>setCode(e.target.value)} inputMode="numeric" />
+            {err && <div className="text-red-600 text-sm mt-2">{err}</div>}
+            <button className="btn btn-primary w-full mt-4" onClick={tryLogin}>Zaloguj</button>
+            <p className="text-xs text-gray-500 mt-3">Właściciel/ka: <span className="font-semibold">0051</span>. Obsługa loguje się kodem ustawionym w „Pracownicy”.</p>
+          </div>
+        </div>
+      );
+    }
+
+    // --- Panel Layout ---
+    function Panel({state,setState,logged,onLogout}){
+      const [tab, setTab] = useState('home');
+      useEffect(()=>{ lucide.createIcons(); });
+      const isOwner = logged.role === 'owner';
+      const tabs = isOwner
+        ? [
+            {id:'home', label:'Strona Główna', icon:'layout-dashboard'},
+            {id:'happy', label:'Happy Hour', icon:'party-popper'},
+            {id:'boxes', label:'Boxy', icon:'box'},
+            {id:'products', label:'Produkty box', icon:'utensils'},
+            {id:'orders', label:'Zamówienia', icon:'receipt'},
+            {id:'employees', label:'Pracownicy', icon:'users'},
+          ]
+        : [
+            {id:'orders', label:'Zamówienia', icon:'receipt'},
+          ];
+      return (
+        <div className="min-h-screen grid grid-cols-[260px_1fr]">
+          <aside className="sidebar border-r border-gray-200 bg-white p-4">
+            <div className="flex items-center gap-2 mb-6">
+              <div className="w-9 h-9 rounded-2xl bg-brand-yellow grid place-items-center shadow-soft"><i data-lucide="sandwich" className="w-5 h-5"></i></div>
+              <div>
+                <div className="font-extrabold">eatmi <span className="text-brand-yellow">panel</span></div>
+                <div className="text-xs text-gray-500">{logged.name} • {isOwner?'właściciel/ka':'obsługa'}</div>
+              </div>
+            </div>
+            <nav className="flex flex-col gap-1">
+              {tabs.map(t => (
+                <a key={t.id} href="#" onClick={(e)=>{e.preventDefault(); setTab(t.id)}}
+                   className={`px-3 py-2 rounded-xl hover:bg-gray-100 flex items-center gap-2 ${tab===t.id?'active':''}`}>
+                  <i data-lucide={t.icon} className="w-4 h-4"></i><span>{t.label}</span>
+                </a>
+              ))}
+            </nav>
+            <div className="mt-6">
+              <button className="btn btn-ghost w-full" onClick={onLogout}><i data-lucide="log-out" className="w-4 h-4"></i> Wyloguj</button>
+            </div>
+          </aside>
+
+          <main className="p-6">
+            {tab==='home'     && <HomeTab />}
+            {tab==='happy'    && <HappyTab state={state} setState={setState} />}
+            {tab==='boxes'    && <BoxesTab state={state} setState={setState} />}
+            {tab==='products' && <ProductsTab state={state} setState={setState} />}
+            {tab==='orders'   && <OrdersTab />}
+            {tab==='employees'&& <EmployeesTab state={state} setState={setState} />}
+          </main>
+        </div>
+      );
+    }
+
+    // --- Tabs ---
+    function useOrders(){
+      const [orders,setOrders]=useState(()=>{
+        try { return JSON.parse(localStorage.getItem(ORDERS_KEY)) || [] } catch { return [] }
+      });
+      useEffect(()=>{
+        const onStorage=(e)=>{ if(e.key===ORDERS_KEY){ setOrders(JSON.parse(e.newValue||'[]')) }};
+        window.addEventListener('storage', onStorage);
+        return ()=> window.removeEventListener('storage', onStorage);
+      },[]);
+      return orders;
+    }
+
+    function HomeTab(){
+      const orders = useOrders();
+      const totals = useMemo(()=>{
+        const all = (orders||[]);
+        const revenue = all.reduce((s,o)=> s + (o.total||0), 0);
+        const today = todayISO();
+        const todayCount = all.filter(o => (o.createdAt||'').slice(0,10)===today).length;
+        return { revenue, count: all.length, today: todayCount };
+      },[orders]);
+      return (
+        <div className="space-y-6">
+          <h1 className="text-2xl font-extrabold">Strona Główna</h1>
+          <div className="grid md:grid-cols-3 gap-4">
+            <div className="card"><div className="text-sm text-gray-500">Łączny zarobek</div><div className="text-2xl font-extrabold mt-1">{currency(totals.revenue)}</div></div>
+            <div className="card"><div className="text-sm text-gray-500">Liczba zamówień</div><div className="text-2xl font-extrabold mt-1">{totals.count}</div></div>
+            <div className="card"><div className="text-sm text-gray-500">Zamówienia dziś</div><div className="text-2xl font-extrabold mt-1">{totals.today}</div></div>
+          </div>
+        </div>
+      );
+    }
+
+    function HappyTab({state,setState}){
+      const [enabled,setEnabled] = useState(state.happyHour.enabled);
+      const [msg,setMsg] = useState(state.happyHour.message);
+      const save = () => setState(s => ({...s, happyHour:{enabled, message:msg}}));
+      return (
+        <div className="space-y-4 max-w-2xl">
+          <h1 className="text-2xl font-extrabold">Happy Hour</h1>
+          <label className="flex items-center gap-2"><input type="checkbox" checked={enabled} onChange={e=>setEnabled(e.target.checked)} /> Włącz pasek</label>
+          <div><div className="text-sm text-gray-600 mb-1">Wiadomość na pasku</div><input className="input" value={msg} onChange={e=>setMsg(e.target.value)} /></div>
+          <button className="btn btn-primary" onClick={save}><i data-lucide="save" className="w-4 h-4"></i>Zapisz</button>
+        </div>
+      );
+    }
+
+    // >>> NOWE: pełne zarządzanie boxami do kreatora + gotowe zestawy
+    function BoxesTab({state,setState}){
+      // Creator boxes CRUD
+      const [creatorBoxes,setCreatorBoxes] = useState(state.creatorBoxes);
+      // Ready (lunch offer) boxes CRUD
+      const [readyBoxes,setReadyBoxes] = useState(state.readyBoxes);
+
+      // helpers
+      const newCreatorBox = () => {
+        const id = String(Date.now()).slice(-6);
+        return { id, name:`Box ${id}`, price:0, limits:{ slone:0, slodkie:0, zdrowe:0, napoj:0 } };
+      };
+      const addCreator = () => setCreatorBoxes(b=>[...b,newCreatorBox()]);
+      const rmCreator  = (id) => setCreatorBoxes(b=>b.filter(x=>x.id!==id));
+
+      const addReady = () => setReadyBoxes(b=>[...b,{id:'rb-'+Math.random().toString(36).slice(2,7),name:'Nowy zestaw',price:0,items:[]}]);
+      const rmReady  = (id) => setReadyBoxes(b=>b.filter(x=>x.id!==id));
+
+      const saveAll = () => setState(s=>({...s, creatorBoxes, readyBoxes}));
+
+      const cats = [
+        {id:'slone', label:'Słone'},
+        {id:'slodkie', label:'Słodkie'},
+        {id:'zdrowe', label:'Zdrowe'},
+        {id:'napoj', label:'Napój'},
+      ];
+
+      return (
+        <div className="space-y-8">
+          <h1 className="text-2xl font-extrabold">Boxy</h1>
+
+          {/* Sekcja: Boxy do kreatora */}
+          <section className="card">
+            <div className="flex items-center justify-between mb-4">
+              <div className="font-semibold text-lg">Boxy do kreatora</div>
+              <button className="btn btn-ghost" onClick={addCreator}><i data-lucide="plus" className="w-4 h-4"></i>Dodaj box</button>
+            </div>
+
+            <div className="space-y-3">
+              {creatorBoxes.map(box=>(
+                <div key={box.id} className="border border-gray-200 rounded-xl p-3">
+                  <div className="grid md:grid-cols-[1fr_120px] gap-3">
+                    <input className="input" value={box.name} onChange={e=>setCreatorBoxes(arr=>arr.map(x=>x.id===box.id?{...x,name:e.target.value}:x))} placeholder="Nazwa boxa" />
+                    <input className="input" value={box.price} onChange={e=>setCreatorBoxes(arr=>arr.map(x=>x.id===box.id?{...x,price:Number(e.target.value)||0}:x))} placeholder="Cena PLN" inputMode="numeric" />
+                  </div>
+                  <div className="grid sm:grid-cols-4 gap-3 mt-3">
+                    {cats.map(c=>(
+                      <div key={c.id}>
+                        <div className="text-sm text-gray-600 mb-1">{c.label} (limit)</div>
+                        <input
+                          className="input"
+                          value={box.limits[c.id]??0}
+                          onChange={e=>{
+                            const val=Math.max(0, parseInt(e.target.value||'0',10));
+                            setCreatorBoxes(arr=>arr.map(x=>x.id===box.id?{...x, limits:{...x.limits,[c.id]:val}}:x))
+                          }}
+                          inputMode="numeric"
+                          placeholder="0"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                  <div className="mt-2 flex justify-between text-xs text-gray-500">
+                    <span>ID: {box.id}</span>
+                    <button className="text-red-600" onClick={()=>rmCreator(box.id)}>Usuń</button>
+                  </div>
+                </div>
+              ))}
+              {creatorBoxes.length===0 && (
+                <div className="text-sm text-gray-600">Brak boxów — dodaj pierwszy.</div>
+              )}
+            </div>
+          </section>
+
+          {/* Sekcja: Gotowe zestawy (oferta lunchowa) */}
+          <section className="card">
+            <div className="flex items-center justify-between mb-3">
+              <div className="font-semibold text-lg">Gotowe zestawy (Oferta lunchowa)</div>
+              <button className="btn btn-ghost" onClick={addReady}><i data-lucide="plus" className="w-4 h-4"></i>Dodaj zestaw</button>
+            </div>
+            <div className="space-y-3">
+              {readyBoxes.map(b=>(
+                <div key={b.id} className="border border-gray-200 rounded-xl p-3">
+                  <div className="grid md:grid-cols-[1fr_120px] gap-3">
+                    <input className="input" value={b.name} onChange={e=>setReadyBoxes(arr=>arr.map(x=>x.id===b.id?{...x,name:e.target.value}:x))} placeholder="Nazwa" />
+                    <input className="input" value={b.price} onChange={e=>setReadyBoxes(arr=>arr.map(x=>x.id===b.id?{...x,price:Number(e.target.value)||0}:x))} placeholder="Cena" inputMode="numeric" />
+                  </div>
+                  <div className="mt-2">
+                    <div className="text-sm text-gray-600 mb-1">Pozycje (po przecinku)</div>
+                    <TagsEditor value={b.items} onChange={(items)=>setReadyBoxes(arr=>arr.map(x=>x.id===b.id?{...x,items}:x))} />
+                  </div>
+                  <div className="mt-2 flex justify-between text-xs text-gray-500">
+                    <span>ID: {b.id}</span>
+                    <button className="text-red-600" onClick={()=>rmReady(b.id)}>Usuń</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          <button className="btn btn-primary" onClick={saveAll}><i data-lucide="save" className="w-4 h-4"></i>Zapisz wszystkie zmiany</button>
+
+          <ProductsPicker note="Podgląd produktów z sekcji „Produkty box” — możesz wykorzystywać ich nazwy w gotowych zestawach." />
+        </div>
+      );
+    }
+
+    function ProductsTab({state,setState}){
+      const [products,setProducts]=useState(state.products);
+      const add=(cat)=>setProducts(p=>({...p,[cat]:[...p[cat],{id:'it-'+Math.random().toString(36).slice(2,7),name:'Nowa pozycja',desc:'',img:''}]}));
+      const rm =(cat,id)=>setProducts(p=>({...p,[cat]:p[cat].filter(x=>x.id!==id)}));
+      const save=()=>setState(s=>({...s, products}));
+      const cats = [
+        {id:'slone', label:'Słone', color:'#F59E0B'},
+        {id:'slodkie', label:'Słodkie', color:'#EC4899'},
+        {id:'zdrowe', label:'Zdrowe', color:'#10B981'},
+        {id:'napoj', label:'Napój', color:'#3B82F6'},
+      ];
+      return (
+        <div className="space-y-6">
+          <h1 className="text-2xl font-extrabold">Produkty box (do kolumn kreatora)</h1>
+          {cats.map(c=>(
+            <div key={c.id} className="card">
+              <div className="flex items-center justify-between">
+                <div className="font-semibold"><span className="inline-block w-3 h-3 rounded-full mr-2" style={{background:c.color}}></span>{c.label}</div>
+                <button className="btn btn-ghost" onClick={()=>add(c.id)}><i data-lucide="plus" className="w-4 h-4"></i>Dodaj</button>
+              </div>
+              <div className="mt-3 grid md:grid-cols-2 gap-3">
+                {products[c.id].map(it=>(
+                  <div key={it.id} className="border border-gray-200 rounded-xl p-3">
+                    <div className="grid gap-2">
+                      <input className="input" value={it.name} onChange={e=>setProducts(p=>({...p,[c.id]:p[c.id].map(x=>x.id===it.id?{...x,name:e.target.value}:x)}))} placeholder="Nazwa" />
+                      <input className="input" value={it.desc} onChange={e=>setProducts(p=>({...p,[c.id]:p[c.id].map(x=>x.id===it.id?{...x,desc:e.target.value}:x)}))} placeholder="Krótki opis" />
+                      <input className="input" value={it.img}  onChange={e=>setProducts(p=>({...p,[c.id]:p[c.id].map(x=>x.id===it.id?{...x,img:e.target.value}:x)}))} placeholder="URL obrazka" />
+                    </div>
+                    <div className="mt-2 flex justify-between">
+                      <span className="text-xs text-gray-500">ID: {it.id}</span>
+                      <button className="text-red-600 text-sm" onClick={()=>rm(c.id,it.id)}>Usuń</button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+          <button className="btn btn-primary" onClick={save}><i data-lucide="save" className="w-4 h-4"></i>Zapisz</button>
+        </div>
+      );
+    }
+
+    function OrdersTab(){
+      const orders = useOrders();
+      return (
+        <div className="space-y-4">
+          <h1 className="text-2xl font-extrabold">Zamówienia</h1>
+          <div className="card overflow-x-auto">
+            <table className="table">
+              <thead>
+                <tr className="text-left text-gray-600">
+                  <th>Data</th>
+                  <th>Imię i nazwisko</th>
+                  <th>Telefon</th>
+                  <th>Email</th>
+                  <th>Adres dostawy</th>
+                  <th>Uwagi / Faktura</th>
+                  <th>Kwota</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(orders||[]).slice().reverse().map(o=>{
+                  const a = o.customer?.adres||{};
+                  const adr = [a.ulica && `ul. ${a.ulica}`, a.nrBud && a.nrBud, a.lokal && `/${a.lokal}`, a.kod, a.miasto].filter(Boolean).join(' ');
+                  const fakturaTxt = o.faktura?.nip ? `Faktura: ${o.faktura.nip} ${o.faktura.firma||''}` : '';
+                  const uw = [o.uwagi, fakturaTxt].filter(Boolean).join(' | ');
+                  const date = o.createdAt ? new Date(o.createdAt) : new Date();
+                  return (
+                    <tr key={o.id || Math.random()}>
+                      <td>{date.toLocaleString('pl-PL')}</td>
+                      <td>{o.customer?.imieNazwisko || '-'}</td>
+                      <td>{o.customer?.telefon || '-'}</td>
+                      <td>{o.customer?.email || '-'}</td>
+                      <td className="whitespace-pre-line">{adr || '-'}</td>
+                      <td className="max-w-[280px] truncate" title={uw}>{uw || '-'}</td>
+                      <td className="font-semibold text-right">{currency(o.total)}</td>
+                    </tr>
+                  )
+                })}
+                {(!orders || orders.length===0) && (
+                  <tr><td colSpan="7" className="text-center text-gray-500 py-4">Brak zamówień (na razie).</td></tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          <AddMockOrder />
+        </div>
+      );
+    }
+
+    function EmployeesTab({state,setState}){
+      const [list,setList]=useState(state.employees);
+      const add=()=>setList(l=>[...l,{id:'e-'+Math.random().toString(36).slice(2,7),name:'Nowa osoba',role:'staff',code:''}]);
+      const rm =(id)=>setList(l=>l.filter(x=>x.id!==id));
+      const save=()=>setState(s=>({...s, employees:list}));
+      return (
+        <div className="space-y-4 max-w-3xl">
+          <h1 className="text-2xl font-extrabold">Pracownicy</h1>
+          <p className="text-sm text-gray-600">Rola <b>właściciel/ka</b> ma pełen dostęp. Rola <b>obsługa</b> widzi tylko zakładkę „Zamówienia”.</p>
+          <div className="space-y-3">
+            {list.map(u=>(
+              <div key={u.id} className="border border-gray-200 rounded-xl p-3">
+                <div className="grid md:grid-cols-[1fr_160px_140px] gap-3 items-center">
+                  <input className="input" placeholder="Imię i nazwisko" value={u.name} onChange={e=>setList(l=>l.map(x=>x.id===u.id?{...x,name:e.target.value}:x))}/>
+                  <select className="input" value={u.role} onChange={e=>setList(l=>l.map(x=>x.id===u.id?{...x,role:e.target.value}:x))}>
+                    <option value="owner">właściciel/ka</option>
+                    <option value="staff">obsługa</option>
+                  </select>
+                  <input className="input" placeholder="Kod (np. 1234)" value={u.code} onChange={e=>setList(l=>l.map(x=>x.id===u.id?{...x,code:e.target.value}:x))}/>
+                </div>
+                <div className="mt-2 flex justify-between text-xs text-gray-500">
+                  <span>ID: {u.id}</span>
+                  <button className="text-red-600" onClick={()=>rm(u.id)}>Usuń</button>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="flex gap-2">
+            <button className="btn btn-ghost" onClick={add}><i data-lucide="plus" className="w-4 h-4"></i>Dodaj pracownika</button>
+            <button className="btn btn-primary" onClick={save}><i data-lucide="save" className="w-4 h-4"></i>Zapisz</button>
+          </div>
+        </div>
+      );
+    }
+
+    // --- Shared components ---
+    function TagsEditor({value,onChange}){
+      const [text,setText]=useState(value.join(', '));
+      useEffect(()=>{ setText(value.join(', ')) },[value]);
+      const commit=()=> onChange(text.split(',').map(s=>s.trim()).filter(Boolean));
+      return (
+        <div className="flex gap-2">
+          <input className="input" value={text} onChange={e=>setText(e.target.value)} onBlur={commit} placeholder="np. Chicken Burger, Brownie, Woda 0,5l" />
+          <button className="btn btn-ghost" onClick={commit}><i data-lucide="check" className="w-4 h-4"></i></button>
+        </div>
+      );
+    }
+
+    function ProductsPicker({note}){
+      const st = loadState() || defaultState;
+      const products = st.products;
+      const cats = [
+        {id:'slone', label:'Słone'},
+        {id:'slodkie', label:'Słodkie'},
+        {id:'zdrowe', label:'Zdrowe'},
+        {id:'napoj', label:'Napój'},
+      ];
+      return (
+        <div className="card">
+          <div className="font-semibold mb-2">Produkty (podgląd)</div>
+          {note && <div className="text-xs text-gray-500 mb-3">{note}</div>}
+          <div className="grid md:grid-cols-4 gap-3">
+            {cats.map(c=>(
+              <div key={c.id} className="border border-gray-200 rounded-xl p-3">
+                <div className="text-sm font-semibold mb-2">{c.label}</div>
+                <div className="flex flex-col gap-1 text-sm">
+                  {(products[c.id]||[]).map(it=> <span key={it.id} className="pill">{it.name}</span>)}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    function AddMockOrder(){
+      const add = () => {
+        const now = new Date().toISOString();
+        const o = {
+          id:'o-'+Math.random().toString(36).slice(2,8),
+          createdAt: now,
+          total: Math.floor(30+Math.random()*40),
+          customer: {
+            imieNazwisko:'Jan Kowalski',
+            telefon:'500600700',
+            email:'jan@example.com',
+            adres:{miasto:'Warszawa',kod:'00-001',ulica:'Marszałkowska',nrBud:'10',pietro:'2',lokal:'5'}
+          },
+          uwagi:'Bez cebuli',
+          faktura:{nip:'1234567890', firma:'ACME Sp. z o.o.'},
+          items:[{name:'Box 2', price:39}]
+        };
+        const list = JSON.parse(localStorage.getItem(ORDERS_KEY)||'[]');
+        list.push(o);
+        localStorage.setItem(ORDERS_KEY, JSON.stringify(list));
+        alert('Dodano przykładowe zamówienie do podglądu.');
+      };
+      return <button className="btn btn-ghost" onClick={add}><i data-lucide="beaker" className="w-4 h-4"></i>Dodaj przykładowe zamówienie (test)</button>
+    }
+
+    // --- Render ---
+    ReactDOM.createRoot(document.getElementById('app')).render(<App />);
+  </script>
+</body>
+</html>
