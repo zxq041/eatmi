@@ -1,22 +1,3 @@
-/**
- * eatmi.pl — Backend API (Railway, single-folder)
- * ------------------------------------------------
- * Funkcje:
- *  - Zamówienia (+ płatność SANDBOX)
- *  - Boxy do kreatora (creatorBoxes) CRUD
- *  - Gotowe zestawy (readyBoxes) CRUD
- *  - Produkty CRUD
- *  - Pracownicy CRUD + login kodem
- *  - Ustawienia Happy Hour
- *  - Serwowanie statycznych plików: index.html, panel.html
- *
- * ENV:
- *  - PORT (Railway)
- *  - MONGODB_URI=mongodb+srv://...
- *  - CORS_ORIGIN=https://twoja-domena-frontend (comma-separated list)
- *  - SANDBOX_PAYMENTS=true
- *  - SEED_KEY=sekretnyklucz (do /api/dev/seed)
- */
 
 import 'dotenv/config';
 import path from 'path';
@@ -520,3 +501,4 @@ app.use((err, req, res, next) => {
 app.listen(PORT, () => {
   console.log(`[eatmi] API on :${PORT}`);
 });
+
