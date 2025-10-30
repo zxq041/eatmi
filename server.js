@@ -1,4 +1,4 @@
-/**/**
+
  * eatmi.pl — Backend API (Railway, single-folder)
  * ------------------------------------------------
  * Funkcje:
@@ -439,5 +439,6 @@ app.use((err, req, res, next) => {
 app.listen(PORT, () => {
   console.log(`[eatmi] API on :${PORT}`);
 });
+
 
 
