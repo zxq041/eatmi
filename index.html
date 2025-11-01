@@ -338,12 +338,13 @@
                         <div key={it.id} className="w-full text-left text-sm bg-white border border-gray-200 rounded-lg p-2 flex items-center justify-between gap-2">
                           <span className="truncate">{it.name}</span>
                       <button
-                          onClick={() => removeItem(catId, it.id)}
-                          className="shrink-0 w-6 h-6 grid place-items-center rounded-md bg-brand-yellow text-white"
-                          aria-label={`Usuń ${it.name}`}
-                          title="Usuń">
-                          <i data-lucide="x" className="w-4 h-4"></i>
-                    </button>
+                        onClick={() => removeItem(catId, it.id)}
+                        className="shrink-0 w-6 h-6 grid place-items-center rounded-md bg-white text-brand-yellow border border-gray-200"
+                        aria-label={`Usuń ${it.name}`}
+                        title="Usuń">
+                        <i data-lucide="x" className="w-4 h-4"></i>
+                      </button>
+
 
 
 
@@ -768,6 +769,7 @@
   </script>
 </body>
 </html>
+
 
 
 
