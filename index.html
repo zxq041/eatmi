@@ -153,18 +153,17 @@
               </a>
             </div>
           </div>
-         <div className="relative">
-              <img 
-                alt="Burger" 
-                loading="lazy" 
-                className="w-full rounded-2xl shadow-soft neo" 
-                src="image.png"
-              />
-              <div className="absolute -bottom-4 -right-4 bg-white rounded-xl2 px-4 py-3 shadow-glass border border-gray-200 text-sm">
-                ⭐ 4.9/5 — 2k+ zamówień
-              </div>
-        </div>
-
+          <div className="relative">
+            <img 
+              alt="Burger" 
+              loading="lazy" 
+              className="w-full rounded-2xl shadow-soft neo" 
+              src="image.png"
+            />
+            <div className="absolute -bottom-4 -right-4 bg-white rounded-xl2 px-4 py-3 shadow-glass border border-gray-200 text-sm">
+              ⭐ 4.9/5 — 2k+ zamówień
+            </div>
+          </div>
         </div>
       </section>
     );
@@ -178,9 +177,10 @@
       const setQty  = (id, qty) => setCart(prev => prev.map(i => i.id === id ? {...i, qty: Math.max(1, qty|0)} : i));
       const incQty  = (id) => setCart(prev => prev.map(i => i.id === id ? {...i, qty: (i.qty||1)+1} : i));
       const decQty  = (id) => setCart(prev => prev.map(i => i.id === id ? {...i, qty: Math.max(1, (i.qty||1)-1)} : i));
+      const clear   = () => setCart([]); // <— brakująca funkcja
       const lineTotal = (i) => (i.price || 0) * (i.qty || 1);
       const total  = useMemo(() => cart.reduce((s,i)=> s + lineTotal(i), 0), [cart]);
-      return <CartContext.Provider value={{cart, add, remove, setQty, incQty, decQty, lineTotal, total}}>{children}</CartContext.Provider>
+      return <CartContext.Provider value={{cart, add, remove, setQty, incQty, decQty, clear, lineTotal, total}}>{children}</CartContext.Provider>
     }
     const useCart = () => React.useContext(CartContext);
 
@@ -237,7 +237,7 @@
           </div>
           <div className="mt-3 flex flex-wrap gap-2 text-xs text-gray-600">
             {box.items.map((it)=> (
-              <span key={it.id} className="px-2 py-1 rounded-full border border-gray-200">{it.name}</span>
+              <span key={it.id||it.name} className="px-2 py-1 rounded-full border border-gray-200">{it.name}</span>
             ))}
           </div>
           <button onClick={onAdd} className="mt-4 inline-flex items-center justify-center gap-2 bg-brand-yellow text-gray-900 font-semibold px-4 py-2 rounded-xl hover:scale-[1.02] transition">
@@ -247,7 +247,413 @@
       );
     };
 
-    // --- Pages ---
+    // --- NOWY BoxBuilder: sekwencyjne kategorie + X do usuwania ---
+    const BoxBuilder = ({boxId}) => {
+      const rules = BOX_RULES[boxId];
+      const orderCats = CATEGORIES.filter(c => rules.limits[c.id] > 0).map(c => c.id);
+      const [selected, setSelected] = useState({ slone:[], slodkie:[], zdrowe:[], napoj:[] });
+      const { add } = useCart();
+
+      // Podgląd zdjęcia (modal)
+      const [preview, setPreview] = useState({ open:false, src:'', alt:'' });
+      const openPreview  = (src, alt) => setPreview({ open:true, src, alt });
+      const closePreview = () => setPreview({ open:false, src:'', alt:'' });
+
+      // Modal info o przeciąganiu
+      const [hintOpen, setHintOpen] = useState(() => {
+        try { return !JSON.parse(localStorage.getItem('eatmi-dnd-hint-dismissed')||'false'); } catch { return true; }
+      });
+      const closeHint = () => { setHintOpen(false); try { localStorage.setItem('eatmi-dnd-hint-dismissed', 'true'); } catch {} };
+
+      // Oblicz aktywną kategorię — pierwsza, która nie ma pełnego limitu
+      const currentCatId = useMemo(() => {
+        for (const id of orderCats) {
+          const lim = rules.limits[id] || 0;
+          if ((selected[id]?.length || 0) < lim) return id;
+        }
+        return null; // wszystkie pełne
+      }, [orderCats, rules.limits, selected]);
+
+      const removeItem = (cat, id) => setSelected(prev => ({...prev, [cat]: prev[cat].filter(i=> i.id!==id)}));
+
+      const onDrop = (e) => {
+        e.preventDefault();
+        try {
+          const data = JSON.parse(e.dataTransfer.getData('text/plain'));
+          if(!data || !data.category || !data.item) return;
+
+          // zezwól tylko na aktywną kategorię
+          if (currentCatId && data.category !== currentCatId) return;
+
+          const cat = data.category;
+          const limit = rules.limits[cat] || 0;
+          if (selected[cat].some(i => i.id === data.item.id)) return; // unikaj duplikatów
+          if (selected[cat].length >= limit) return; // już pełna
+          setSelected(prev => ({...prev, [cat]: [...prev[cat], data.item]}));
+        } catch(err) {}
+      };
+
+      const onDragOver = (e) => { e.preventDefault(); e.currentTarget.classList.add('drag-hover'); };
+      const onDragLeave = (e) => { e.currentTarget.classList.remove('drag-hover'); };
+      const onDropEnd   = (e) => { e.currentTarget.classList.remove('drag-hover'); onDrop(e); };
+
+      const canAddToCart = orderCats.every(id => (selected[id]?.length || 0) === (rules.limits[id] || 0));
+      const handleAdd = () => {
+        add({ type:'custom-box', name: rules.name, price: rules.price, items: Object.values(selected).flat() });
+        window.location.hash = '#/koszyk';
+      };
+
+      return (
+        <section className="py-10">
+          <div className="max-w-6xl mx:auto px-4"></div>
+          <div className="max-w-6xl mx-auto px-4">
+            <a href="#/" className="inline-flex items-center gap-2 text-sm text-gray-600"><i data-lucide="arrow-left" className="w-4 h-4"></i> Wróć</a>
+
+            {/* BOX (strefa zrzutu) */}
+            <div className="mt-4 bg-white border border-gray-200 rounded-2xl p-5 shadow-soft">
+              <div className="flex items-center justify-between">
+                <h2 className="font-extrabold text-xl">{rules.name}</h2>
+                <div className="text-gray-900 font-extrabold">{currency(rules.price)}</div>
+              </div>
+              <p className="text-gray-600 text-sm mt-1">
+                {currentCatId ? (
+                  <>
+                    Krok {orderCats.indexOf(currentCatId)+1}/{orderCats.length}: wybierz pozycje z kategorii <b>{CATEGORIES.find(c=>c.id===currentCatId)?.name}</b> i przeciągnij do boxa.
+                  </>
+                ) : (
+                  <>Wszystkie kategorie uzupełnione. Możesz dodać box do koszyka.</>
+                )}
+              </p>
+
+              {/* strefy podglądu wybranych elementów per kategoria + X do usuwania */}
+              <div onDragOver={onDragOver} onDragLeave={onDragLeave} onDrop={onDropEnd} className="mt-4 rounded-2xl border-2 border-dashed border-gray-200 p-4 grid grid-cols-2 md:grid-cols-4 gap-3">
+                {orderCats.map(catId => (
+                  <div key={catId} className="bg-gray-50 rounded-xl p-3 border border-gray-200">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="font-semibold">{CATEGORIES.find(c=>c.id===catId)?.name}</span>
+                      <span className="text-gray-500">{selected[catId].length}/{rules.limits[catId]}</span>
+                    </div>
+                    <div className="mt-2 flex flex-col gap-2">
+                      {selected[catId].map(it => (
+                        <div key={it.id} className="w-full text-left text-sm bg-white border border-gray-200 rounded-lg p-2 flex items-center justify-between gap-2">
+                          <span className="truncate">{it.name}</span>
+                          <button
+                            onClick={()=> removeItem(catId, it.id)}
+                            className="shrink-0 w-6 h-6 grid place-items-center rounded-md border border-gray-200 hover:bg-gray-100"
+                            aria-label={`Usuń ${it.name}`}
+                            title="Usuń"
+                          >
+                            <i data-lucide="x" className="w-4 h-4"></i>
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <button disabled={!canAddToCart} onClick={handleAdd} className={`mt-4 w-full inline-flex items-center justify-center gap-2 rounded-xl px-4 py-3 font-semibold ${canAddToCart ? 'bg-brand-yellow text-gray-900' : 'bg-gray-200 text-gray-500 cursor-not-allowed'}`}>
+                <i data-lucide="check-circle" className="w-5 h-5"></i>
+                Dodaj box do koszyka
+              </button>
+            </div>
+
+            {/* PANEL WYBORU — tylko aktywna kategoria */}
+            <div className="mt-6">
+              {currentCatId ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                  <div className="bg-white border border-gray-200 rounded-2xl shadow-soft overflow-hidden">
+                    <div className="px-5 py-3 font-semibold text-white" style={{background: getCatColor(currentCatId)}}>
+                      {CATEGORIES.find(c=>c.id===currentCatId)?.name}
+                    </div>
+                    <div className="p-4 space-y-3">
+                      {MENU[currentCatId].map(item => (
+                        <div
+                          key={item.id}
+                          draggable
+                          onDragStart={(e)=> e.dataTransfer.setData('text/plain', JSON.stringify({category: currentCatId, item}))}
+                          className="group bg-white border border-gray-200 rounded-xl px-3 py-2 hover:shadow-soft transition cursor-grab"
+                        >
+                          <div className="flex items-center gap-3">
+                            {/* Miniatura po lewej – klik = podgląd dużego zdjęcia */}
+                            <button
+                              type="button"
+                              onClick={(ev)=>{ ev.preventDefault(); ev.stopPropagation(); openPreview(item.img, item.name); }}
+                              className="shrink-0 rounded-lg overflow-hidden border border-gray-200 focus:outline-none focus:ring-2 focus:ring-brand-yellow"
+                              title="Powiększ zdjęcie"
+                              aria-label={`Powiększ zdjęcie: ${item.name}`}
+                            >
+                              <img
+                                src={item.img}
+                                alt={item.name}
+                                loading="lazy"
+                                draggable="false"
+                                className="w-10 h-10 object-cover"
+                              />
+                            </button>
+
+                            {/* Teksty po prawej */}
+                            <div className="min-w-0">
+                              <div className="font-semibold text-sm leading-tight">{item.name}</div>
+                              <div className="text-xs text-gray-600 truncate">{item.desc}</div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-sm text-gray-600">Wszystkie wymagane kategorie zostały wybrane. Możesz zakończyć zamówienie powyżej.</div>
+              )}
+            </div>
+
+            {/* Modal podglądu zdjęcia */}
+            {preview.open && (
+              <div className="fixed inset-0 z-[60] bg-black/70 flex items-center justify-center p-4" onClick={closePreview}>
+                <div className="relative bg-white rounded-2xl shadow-glass max-w-3xl w-full">
+                  <button
+                    onClick={closePreview}
+                    className="absolute top-2 right-2 p-2 rounded-full bg-white/90 border border-gray-200 shadow-soft"
+                    aria-label="Zamknij podgląd"
+                  >
+                    <i data-lucide="x" className="w-4 h-4"></i>
+                  </button>
+                  <img src={preview.src} alt={preview.alt} className="w-full h-auto rounded-2xl" />
+                </div>
+              </div>
+            )}
+
+            {/* Modal informacji o przeciąganiu (pokazuje się raz) */}
+            {hintOpen && (
+              <div className="fixed inset-0 z-[70] bg-black/60 flex items-center justify-center p-4" role="dialog" aria-modal="true">
+                <div className="relative w-full max-w-lg bg-white rounded-2xl shadow-glass border border-gray-200 p-5">
+                  <button
+                    onClick={closeHint}
+                    className="absolute top-3 right-3 p-2 rounded-full bg-white border border-gray-200 shadow-soft hover:bg-gray-50"
+                    aria-label="Zamknij okno"
+                    title="Zamknij"
+                  >
+                    <i data-lucide="x" className="w-4 h-4"></i>
+                  </button>
+                  <div className="flex items-start gap-3">
+                    <div className="shrink-0 w-10 h-10 rounded-xl grid place-items-center bg-brand-yellow">
+                      <i data-lucide="hand" className="w-5 h-5"></i>
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-extrabold">Jak dodać produkt do boxa?</h3>
+                      <p className="mt-1 text-gray-700">
+                        Przeciągaj pozycje z aktywnej kategorii do strefy boxa. Po uzupełnieniu limitu kategoria zniknie i pojawi się następna.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="mt-4 flex justify-end">
+                    <button onClick={closeHint} className="px-4 py-2 rounded-xl bg-gray-900 text-white font-semibold">Rozumiem</button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </section>
+      );
+    }
+
+    // >>> KOSZYK: zmiana ilości i usuwanie
+    const Koszyk = () => {
+      const { cart, remove, clear, total, incQty, decQty, setQty, lineTotal } = useCart();
+      const goToCheckout = () => window.location.hash = '#/zamowienie';
+      return (
+        <section className="py-10">
+          <div className="max-w-6xl mx-auto px-4">
+            <a href="#/" className="inline-flex items-center gap-2 text-sm text-gray-600"><i data-lucide="arrow-left" className="w-4 h-4"></i> Wróć</a>
+            <h2 className="text-2xl font-extrabold mt-3">Koszyk</h2>
+            {cart.length === 0 ? (
+              <p className="text-gray-600 mt-2">Twój koszyk jest pusty.</p>
+            ) : (
+              <div className="mt-6 grid md:grid-cols-3 gap-6 items-start">
+                <div className="md:col-span-2 space-y-4">
+                  {cart.map(item => (
+                    <div key={item.id} className="bg-white border border-gray-200 rounded-2xl p-4 flex items-center justify-between gap-4">
+                      <div className="min-w-0">
+                        <div className="font-bold">{item.name}</div>
+                        {item.items && <div className="mt-1 text-sm text-gray-600 flex flex-wrap gap-2">{item.items.map((i)=> <span key={i.id||i.name} className="px-2 py-1 rounded-full border border-gray-200">{i.name}</span>)}</div>}
+                      </div>
+
+                      <div className="flex items-center gap-4 shrink-0">
+                        {/* Ilość */}
+                        <div className="flex items-center gap-2">
+                          <button onClick={()=> decQty(item.id)} className="w-8 h-8 rounded-lg border border-gray-200 grid place-items-center">−</button>
+                          <input
+                            value={item.qty||1}
+                            onChange={(e)=> setQty(item.id, parseInt(e.target.value||'1',10))}
+                            className="w-12 text-center border border-gray-200 rounded-lg py-1"
+                            inputMode="numeric"
+                            pattern="[0-9]*"
+                          />
+                          <button onClick={()=> incQty(item.id)} className="w-8 h-8 rounded-lg border border-gray-200 grid place-items-center">+</button>
+                        </div>
+
+                        {/* Cena liniowa */}
+                        <div className="text-right">
+                          <div className="font-extrabold">{currency(lineTotal(item))}</div>
+                          <div className="text-xs text-gray-500">({currency(item.price)} / szt.)</div>
+                        </div>
+
+                        {/* Usuń */}
+                        <button onClick={()=> remove(item.id)} className="text-red-600 hover:underline">Usuń</button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <aside className="bg-white border border-gray-200 rounded-2xl p-5">
+                  <div className="flex items-center justify-between">
+                    <span className="font-semibold">Suma</span>
+                    <span className="font-extrabold">{currency(total)}</span>
+                  </div>
+                  <div className="mt-4 grid gap-2">
+                    <button onClick={goToCheckout} className="w-full bg-brand-yellow text-gray-900 font-semibold rounded-xl px-4 py-3">Przejdź do zamówienia</button>
+                    <button onClick={clear} className="w-full bg-gray-100 text-gray-700 rounded-xl px-4 py-3">Wyczyść koszyk</button>
+                  </div>
+                </aside>
+              </div>
+            )}
+          </div>
+        </section>
+      );
+    }
+
+    const Zamowienie = () => {
+      const { cart, total, clear, lineTotal } = useCart();
+      const [form, setForm] = useState({ imieNazwisko:'', telefon:'', email:'', miasto:'', kod:'', ulica:'', nrBud:'', pietro:'', lokal:'', uwagi:'', faktura:false, nip:'', firma:'' });
+      const handle = (k,v)=> setForm(s=> ({...s,[k]:v}))
+      const submit = () => {
+        if(!form.imieNazwisko || !form.telefon || !form.miasto || !form.ulica) { alert('Uzupełnij wymagane pola'); return; }
+        alert('Zamówienie złożone! (płatność online — symulacja)');
+        clear();
+        window.location.hash = '#/';
+      }
+      return (
+        <section className="py-10">
+          <div className="max-w-6xl mx-auto px-4">
+            <a href="#/koszyk" className="inline-flex items-center gap-2 text-sm text-gray-600"><i data-lucide="arrow-left" className="w-4 h-4"></i> Wróć do koszyka</a>
+            <h2 className="text-2xl font-extrabold mt-3">Zamówienie</h2>
+            <div className="mt-6 grid lg:grid-cols-3 gap-6 items-start">
+              <div className="lg:col-span-2 bg-white border border-gray-200 rounded-2xl p-5">
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-xs uppercase tracking-wider text-gray-500">Imię i nazwisko *</label>
+                    <input value={form.imieNazwisko} onChange={e=>handle('imieNazwisko', e.target.value)} className="input w-full border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-brand-yellow bg-white"/>
+                  </div>
+                  <div>
+                    <label className="text-xs uppercase tracking-wider text-gray-500">Nr telefonu *</label>
+                    <input value={form.telefon} onChange={e=>handle('telefon', e.target.value)} className="input w-full border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-brand-yellow bg-white"/>
+                  </div>
+                  <div>
+                    <label className="text-xs uppercase tracking-wider text-gray-500">Adres email</label>
+                    <input value={form.email} onChange={e=>handle('email', e.target.value)} className="input w-full border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-brand-yellow bg-white"/>
+                  </div>
+                  <div>
+                    <label className="text-xs uppercase tracking-wider text-gray-500">Miasto *</label>
+                    <input value={form.miasto} onChange={e=>handle('miasto', e.target.value)} className="input w-full border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-brand-yellow bg-white"/>
+                  </div>
+                  <div>
+                    <label className="text-xs uppercase tracking-wider text-gray-500">Kod pocztowy</label>
+                    <input value={form.kod} onChange={e=>handle('kod', e.target.value)} className="input w-full border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-brand-yellow bg-white"/>
+                  </div>
+                  <div>
+                    <label className="text-xs uppercase tracking-wider text-gray-500">Ulica *</label>
+                    <input value={form.ulica} onChange={e=>handle('ulica', e.target.value)} className="input w-full border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-brand-yellow bg-white"/>
+                  </div>
+                  <div>
+                    <label className="text-xs uppercase tracking-wider text-gray-500">Nr budynku</label>
+                    <input value={form.nrBud} onChange={e=>handle('nrBud', e.target.value)} className="input w-full border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-brand-yellow bg-white"/>
+                  </div>
+                  <div>
+                    <label className="text-xs uppercase tracking-wider text-gray-500">Piętro</label>
+                    <input value={form.pietro} onChange={e=>handle('pietro', e.target.value)} className="input w-full border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-brand-yellow bg-white"/>
+                  </div>
+                  <div>
+                    <label className="text-xs uppercase tracking-wider text-gray-500">Nr lokalu / mieszkania</label>
+                    <input value={form.lokal} onChange={e=>handle('lokal', e.target.value)} className="input w-full border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-brand-yellow bg-white"/>
+                  </div>
+                  <div className="md:col-span-2">
+                    <label className="text-xs uppercase tracking-wider text-gray-500">Uwagi do zamówienia</label>
+                    <textarea value={form.uwagi} onChange={e=>handle('uwagi', e.target.value)} className="w-full border border-gray-200 rounded-xl px-4 py-3 min-h-[100px]"></textarea>
+                  </div>
+                </div>
+                <div className="mt-4">
+                  <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={form.faktura} onChange={e=>handle('faktura', e.target.checked)} /> Chcę dane do faktury</label>
+                  {form.faktura && (
+                    <div className="grid md:grid-cols-2 gap-4 mt-3">
+                      <div>
+                        <label className="text-xs uppercase tracking-wider text-gray-500">NIP</label>
+                        <input value={form.nip} onChange={e=>handle('nip', e.target.value)} className="input w-full border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-brand-yellow bg-white"/>
+                      </div>
+                      <div>
+                        <label className="text-xs uppercase tracking-wider text-gray-500">Nazwa firmy</label>
+                        <input value={form.firma} onChange={e=>handle('firma', e.target.value)} className="input w-full border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-brand-yellow bg-white"/>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+              <aside className="bg-white border border-gray-200 rounded-2xl p-5">
+                <div className="font-semibold">Podsumowanie</div>
+                <div className="mt-3 space-y-3 max-h-64 overflow-auto pr-2">
+                  {cart.map(i => (
+                    <div key={i.id} className="text-sm">
+                      <div className="flex items-center justify-between">
+                        <span className="font-medium">{i.name} × {i.qty||1}</span>
+                        <span className="font-bold">{currency(lineTotal(i))}</span>
+                      </div>
+                      {i.items && <div className="text-gray-600 flex flex-wrap gap-1 mt-1">{i.items.map(x => <span key={x.id||x.name} className="px-1.5 py-0.5 border border-gray-200 rounded-lg">{x.name}</span>)}</div>}
+                    </div>
+                  ))}
+                </div>
+                <div className="flex items-center justify-between mt-4 text-lg"><span className="font-bold">Do zapłaty</span><span className="font-extrabold">{currency(total)}</span></div>
+                <button onClick={submit} className="w-full mt-4 bg-brand-yellow text-gray-900 font-semibold rounded-xl px-4 py-3">Płatność online</button>
+              </aside>
+            </div>
+          </div>
+        </section>
+      );
+    }
+
+    // --- Router ---
+    const Router = () => {
+      const [route, setRoute] = useState(window.location.hash || '#/');
+      useEffect(()=>{
+        const onHash = () => setRoute(window.location.hash || '#/');
+        window.addEventListener('hashchange', onHash);
+        return ()=> window.removeEventListener('hashchange', onHash);
+      },[]);
+      useEffect(()=> { lucide.createIcons(); }, [route]);
+
+      if(route.startsWith('#/box/')) {
+        const id = route.split('/')[2];
+        return <BoxBuilder boxId={id} />
+      }
+      if(route === '#/koszyk') return <Koszyk />
+      if(route === '#/zamowienie') return <Zamowienie />
+      return <Home />
+    }
+
+    // helpers
+    function getCatColor(cat){
+      switch(cat){
+        case 'slone': return '#F59E0B';
+        case 'slodkie': return '#EC4899';
+        case 'zdrowe': return '#10B981';
+        case 'napoj': return '#3B82F6';
+        default: return '#6B7280';
+      }
+    }
+
+    const Input = (props) => <input {...props} className={(props.className||'') + ' input w-full border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-brand-yellow bg-white'} />
+    const Select = (props) => <select {...props} className={(props.className||'') + ' input w-full border border-gray-200 rounded-xl px-4 py-3 bg-white focus:outline-none focus:ring-2 focus:ring-brand-yellow'} />
+    const Label = ({children}) => <label className="text-xs uppercase tracking-wider text-gray-500">{children}</label>
+
+    // --- Home ---
     const Home = () => {
       const { add } = useCart();
       return (
@@ -315,384 +721,6 @@
       )
     };
 
-    const Input = (props) => <input {...props} className={(props.className||'') + ' input w-full border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-brand-yellow bg-white'} />
-    const Select = (props) => <select {...props} className={(props.className||'') + ' input w-full border border-gray-200 rounded-xl px-4 py-3 bg-white focus:outline-none focus:ring-2 focus:ring-brand-yellow'} />
-    const Label = ({children}) => <label className="text-xs uppercase tracking-wider text-gray-500">{children}</label>
-
-    // --- BoxBuilder: miniatury + modal info
-    const BoxBuilder = ({boxId}) => {
-      const rules = BOX_RULES[boxId];
-      const [selected, setSelected] = useState({ slone:[], slodkie:[], zdrowe:[], napoj:[] });
-      const { add } = useCart();
-
-      // Podgląd zdjęcia (modal)
-      const [preview, setPreview] = useState({ open:false, src:'', alt:'' });
-      const openPreview  = (src, alt) => setPreview({ open:true, src, alt });
-      const closePreview = () => setPreview({ open:false, src:'', alt:'' });
-
-      // Modal info o przeciąganiu
-      const [hintOpen, setHintOpen] = useState(() => {
-        try { return !JSON.parse(localStorage.getItem('eatmi-dnd-hint-dismissed')||'false'); } catch { return true; }
-      });
-      const closeHint = () => {
-        setHintOpen(false);
-        try { localStorage.setItem('eatmi-dnd-hint-dismissed', 'true'); } catch {}
-      };
-
-      const onDrop = (e) => {
-        e.preventDefault();
-        try {
-          const data = JSON.parse(e.dataTransfer.getData('text/plain'));
-          if(!data || !data.category) return;
-          const cat = data.category;
-          const limit = rules.limits[cat] || 0;
-          if (selected[cat].some(i => i.id === data.item.id)) return; // unikaj duplikatów
-          if (selected[cat].length >= limit) {
-            alert(`Limit dla kategorii: ${CATEGORIES.find(c=>c.id===cat)?.name} to ${limit} szt.`);
-            return;
-          }
-          setSelected(prev => ({...prev, [cat]: [...prev[cat], data.item]}));
-        } catch(err) {}
-      }
-
-      const onDragOver = (e) => { e.preventDefault(); e.currentTarget.classList.add('drag-hover') }
-      const onDragLeave = (e) => { e.currentTarget.classList.remove('drag-hover') }
-      const onDropEnd   = (e) => { e.currentTarget.classList.remove('drag-hover'); onDrop(e) }
-
-      const removeItem = (cat, id) => setSelected(prev => ({...prev, [cat]: prev[cat].filter(i=> i.id!==id)}));
-      const canAddToCart = Object.entries(rules.limits).every(([cat, lim]) => selected[cat].length === lim);
-      const handleAdd = () => {
-        add({ type:'custom-box', name: rules.name, price: rules.price, items: Object.values(selected).flat() });
-        window.location.hash = '#/koszyk';
-      }
-
-      return (
-        <section className="py-10">
-          <div className="max-w-6xl mx:auto px-4"></div>
-          <div className="max-w-6xl mx-auto px-4">
-            <a href="#/" className="inline-flex items-center gap-2 text-sm text-gray-600"><i data-lucide="arrow-left" className="w-4 h-4"></i> Wróć</a>
-
-            {/* BOX (strefa zrzutu) NA GÓRZE */}
-            <div className="mt-4 bg-white border border-gray-200 rounded-2xl p-5 shadow-soft">
-              <div className="flex items-center justify-between">
-                <h2 className="font-extrabold text-xl">{rules.name}</h2>
-                <div className="text-gray-900 font-extrabold">{currency(rules.price)}</div>
-              </div>
-              <p className="text-gray-600 text-sm mt-1">Aby dodać produkt do boxa — <b>przeciągnij</b> go z listy poniżej. Kliknięcie pozycji w boksie ją usuwa.</p>
-
-              {/* strefy dla kategorii w jednym boksie */}
-              <div onDragOver={onDragOver} onDragLeave={onDragLeave} onDrop={onDropEnd} className="mt-4 rounded-2xl border-2 border-dashed border-gray-200 p-4 grid grid-cols-2 md:grid-cols-4 gap-3">
-                {CATEGORIES.filter(c => rules.limits[c.id] > 0).map(cat => (
-                  <div key={cat.id} className="bg-gray-50 rounded-xl p-3 border border-gray-200">
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="font-semibold">{cat.name}</span>
-                      <span className="text-gray-500">{selected[cat.id].length}/{rules.limits[cat.id]}</span>
-                    </div>
-                    <div className="mt-2 flex flex-col gap-2">
-                      {selected[cat.id].map(it => (
-                        <button key={it.id} onClick={()=> removeItem(cat.id, it.id)} className="w-full text-left text-sm bg-white border border-gray-200 rounded-lg p-2 hover:bg-gray-50">
-                          {it.name}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              <button disabled={!canAddToCart} onClick={handleAdd} className={`mt-4 w-full inline-flex items-center justify-center gap-2 rounded-xl px-4 py-3 font-semibold ${canAddToCart ? 'bg-brand-yellow text-gray-900' : 'bg-gray-200 text-gray-500 cursor-not-allowed'}`}>
-                <i data-lucide="check-circle" className="w-5 h-5"></i>
-                Dodaj box do koszyka
-              </button>
-            </div>
-
-            {/* 4 TABELKI POD BOXEM – miniatura po lewej + nazwa + krótki opis */}
-            <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {CATEGORIES.filter(c => rules.limits[c.id] > 0).map(cat => (
-                <div key={cat.id} className="bg-white border border-gray-200 rounded-2xl shadow-soft overflow-hidden flex flex-col h-full">
-                  <div className="px-5 py-3 font-semibold text-white" style={{background: getCatColor(cat.id)}}>
-                    {cat.name}
-                  </div>
-
-                  <div className="p-4 space-y-3">
-                    {MENU[cat.id].map(item => (
-                      <div
-                        key={item.id}
-                        draggable
-                        onDragStart={(e)=> e.dataTransfer.setData('text/plain', JSON.stringify({category: cat.id, item}))}
-                        className="group bg-white border border-gray-200 rounded-xl px-3 py-2 hover:shadow-soft transition cursor-grab"
-                      >
-                        <div className="flex items-center gap-3">
-                          {/* Miniatura po lewej – klik = podgląd dużego zdjęcia */}
-                          <button
-                            type="button"
-                            onClick={(ev)=>{ ev.preventDefault(); ev.stopPropagation(); openPreview(item.img, item.name); }}
-                            className="shrink-0 rounded-lg overflow-hidden border border-gray-200 focus:outline-none focus:ring-2 focus:ring-brand-yellow"
-                            title="Powiększ zdjęcie"
-                            aria-label={`Powiększ zdjęcie: ${item.name}`}
-                          >
-                            <img
-                              src={item.img}
-                              alt={item.name}
-                              loading="lazy"
-                              draggable="false"
-                              className="w-10 h-10 object-cover"
-                            />
-                          </button>
-
-                          {/* Teksty po prawej */}
-                          <div className="min-w-0">
-                            <div className="font-semibold text-sm leading-tight">{item.name}</div>
-                            <div className="text-xs text-gray-600 truncate">{item.desc}</div>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Modal podglądu zdjęcia */}
-            {preview.open && (
-              <div className="fixed inset-0 z-[60] bg-black/70 flex items-center justify-center p-4" onClick={closePreview}>
-                <div className="relative bg-white rounded-2xl shadow-glass max-w-3xl w-full">
-                  <button
-                    onClick={closePreview}
-                    className="absolute top-2 right-2 p-2 rounded-full bg-white/90 border border-gray-200 shadow-soft"
-                    aria-label="Zamknij podgląd"
-                  >
-                    <i data-lucide="x" className="w-4 h-4"></i>
-                  </button>
-                  <img src={preview.src} alt={preview.alt} className="w-full h-auto rounded-2xl" />
-                </div>
-              </div>
-            )}
-
-            {/* Modal informacji o przeciąganiu (pokazuje się raz) */}
-            {hintOpen && (
-              <div className="fixed inset-0 z-[70] bg-black/60 flex items-center justify-center p-4" role="dialog" aria-modal="true">
-                <div className="relative w-full max-w-lg bg-white rounded-2xl shadow-glass border border-gray-200 p-5">
-                  <button
-                    onClick={closeHint}
-                    className="absolute top-3 right-3 p-2 rounded-full bg-white border border-gray-200 shadow-soft hover:bg-gray-50"
-                    aria-label="Zamknij okno"
-                    title="Zamknij"
-                  >
-                    <i data-lucide="x" className="w-4 h-4"></i>
-                  </button>
-                  <div className="flex items-start gap-3">
-                    <div className="shrink-0 w-10 h-10 rounded-xl grid place-items-center bg-brand-yellow">
-                      <i data-lucide="hand" className="w-5 h-5"></i>
-                    </div>
-                    <div>
-                      <h3 className="text-lg font-extrabold">Jak dodać produkt do boxa?</h3>
-                      <p className="mt-1 text-gray-700">
-                        Aby dodać produkt do boxa, <b>przeciągnij</b> go z listy kategorii poniżej do strefy boxa u góry.
-                      </p>
-                    </div>
-                  </div>
-                  <div className="mt-4 flex justify-end">
-                    <button onClick={closeHint} className="px-4 py-2 rounded-xl bg-gray-900 text-white font-semibold">Rozumiem</button>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        </section>
-      );
-    }
-
-    // >>> KOSZYK: zmiana ilości i usuwanie
-    const Koszyk = () => {
-      const { cart, remove, clear, total, incQty, decQty, setQty, lineTotal } = useCart();
-      const goToCheckout = () => window.location.hash = '#/zamowienie';
-      return (
-        <section className="py-10">
-          <div className="max-w-6xl mx-auto px-4">
-            <a href="#/" className="inline-flex items-center gap-2 text-sm text-gray-600"><i data-lucide="arrow-left" className="w-4 h-4"></i> Wróć</a>
-            <h2 className="text-2xl font-extrabold mt-3">Koszyk</h2>
-            {cart.length === 0 ? (
-              <p className="text-gray-600 mt-2">Twój koszyk jest pusty.</p>
-            ) : (
-              <div className="mt-6 grid md:grid-cols-3 gap-6 items-start">
-                <div className="md:col-span-2 space-y-4">
-                  {cart.map(item => (
-                    <div key={item.id} className="bg-white border border-gray-200 rounded-2xl p-4 flex items-center justify-between gap-4">
-                      <div className="min-w-0">
-                        <div className="font-bold">{item.name}</div>
-                        {item.items && <div className="mt-1 text-sm text-gray-600 flex flex-wrap gap-2">{item.items.map((i)=> <span key={i.id} className="px-2 py-1 rounded-full border border-gray-200">{i.name}</span>)}</div>}
-                      </div>
-
-                      <div className="flex items-center gap-4 shrink-0">
-                        {/* Ilość */}
-                        <div className="flex items-center gap-2">
-                          <button onClick={()=> decQty(item.id)} className="w-8 h-8 rounded-lg border border-gray-200 grid place-items-center">−</button>
-                          <input
-                            value={item.qty||1}
-                            onChange={(e)=> setQty(item.id, parseInt(e.target.value||'1',10))}
-                            className="w-12 text-center border border-gray-200 rounded-lg py-1"
-                            inputMode="numeric"
-                            pattern="[0-9]*"
-                          />
-                          <button onClick={()=> incQty(item.id)} className="w-8 h-8 rounded-lg border border-gray-200 grid place-items-center">+</button>
-                        </div>
-
-                        {/* Cena liniowa */}
-                        <div className="text-right">
-                          <div className="font-extrabold">{currency(lineTotal(item))}</div>
-                          <div className="text-xs text-gray-500">({currency(item.price)} / szt.)</div>
-                        </div>
-
-                        {/* Usuń */}
-                        <button onClick={()=> remove(item.id)} className="text-red-600 hover:underline">Usuń</button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                <aside className="bg-white border border-gray-200 rounded-2xl p-5">
-                  <div className="flex items-center justify-between">
-                    <span className="font-semibold">Suma</span>
-                    <span className="font-extrabold">{currency(total)}</span>
-                  </div>
-                  <div className="mt-4 grid gap-2">
-                    <button onClick={goToCheckout} className="w-full bg-brand-yellow text-gray-900 font-semibold rounded-xl px-4 py-3">Przejdź do zamówienia</button>
-                    <button onClick={clear} className="w-full bg-gray-100 text-gray-700 rounded-xl px-4 py-3">Wyczyść koszyk</button>
-                  </div>
-                </aside>
-              </div>
-            )}
-          </div>
-        </section>
-      );
-    }
-
-    const Zamowienie = () => {
-      const { cart, total, clear, lineTotal } = useCart();
-      const [form, setForm] = useState({ imieNazwisko:'', telefon:'', email:'', miasto:'', kod:'', ulica:'', nrBud:'', pietro:'', lokal:'', uwagi:'', faktura:false, nip:'', firma:'' });
-      const handle = (k,v)=> setForm(s=> ({...s,[k]:v}))
-      const submit = () => {
-        if(!form.imieNazwisko || !form.telefon || !form.miasto || !form.ulica) { alert('Uzupełnij wymagane pola'); return; }
-        alert('Zamówienie złożone! (płatność online — symulacja)');
-        clear();
-        window.location.hash = '#/';
-      }
-      return (
-        <section className="py-10">
-          <div className="max-w-6xl mx-auto px-4">
-            <a href="#/koszyk" className="inline-flex items-center gap-2 text-sm text-gray-600"><i data-lucide="arrow-left" className="w-4 h-4"></i> Wróć do koszyka</a>
-            <h2 className="text-2xl font-extrabold mt-3">Zamówienie</h2>
-            <div className="mt-6 grid lg:grid-cols-3 gap-6 items-start">
-              <div className="lg:col-span-2 bg-white border border-gray-200 rounded-2xl p-5">
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div>
-                    <Label>Imię i nazwisko *</Label>
-                    <Input value={form.imieNazwisko} onChange={e=>handle('imieNazwisko', e.target.value)} />
-                  </div>
-                  <div>
-                    <Label>Nr telefonu *</Label>
-                    <Input value={form.telefon} onChange={e=>handle('telefon', e.target.value)} />
-                  </div>
-                  <div>
-                    <Label>Adres email</Label>
-                    <Input value={form.email} onChange={e=>handle('email', e.target.value)} />
-                  </div>
-                  <div>
-                    <Label>Miasto *</Label>
-                    <Input value={form.miasto} onChange={e=>handle('miasto', e.target.value)} />
-                  </div>
-                  <div>
-                    <Label>Kod pocztowy</Label>
-                    <Input value={form.kod} onChange={e=>handle('kod', e.target.value)} />
-                  </div>
-                  <div>
-                    <Label>Ulica *</Label>
-                    <Input value={form.ulica} onChange={e=>handle('ulica', e.target.value)} />
-                  </div>
-                  <div>
-                    <Label>Nr budynku</Label>
-                    <Input value={form.nrBud} onChange={e=>handle('nrBud', e.target.value)} />
-                  </div>
-                  <div>
-                    <Label>Piętro</Label>
-                    <Input value={form.pietro} onChange={e=>handle('pietro', e.target.value)} />
-                  </div>
-                  <div>
-                    <Label>Nr lokalu / mieszkania</Label>
-                    <Input value={form.lokal} onChange={e=>handle('lokal', e.target.value)} />
-                  </div>
-                  <div className="md:col-span-2">
-                    <Label>Uwagi do zamówienia</Label>
-                    <textarea value={form.uwagi} onChange={e=>handle('uwagi', e.target.value)} className="w-full border border-gray-200 rounded-xl px-4 py-3 min-h-[100px]"></textarea>
-                  </div>
-                </div>
-                <div className="mt-4">
-                  <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={form.faktura} onChange={e=>handle('faktura', e.target.checked)} /> Chcę dane do faktury</label>
-                  {form.faktura && (
-                    <div className="grid md:grid-cols-2 gap-4 mt-3">
-                      <div>
-                        <Label>NIP</Label>
-                        <Input value={form.nip} onChange={e=>handle('nip', e.target.value)} />
-                      </div>
-                      <div>
-                        <Label>Nazwa firmy</Label>
-                        <Input value={form.firma} onChange={e=>handle('firma', e.target.value)} />
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-              <aside className="bg-white border border-gray-200 rounded-2xl p-5">
-                <div className="font-semibold">Podsumowanie</div>
-                <div className="mt-3 space-y-3 max-h-64 overflow-auto pr-2">
-                  {cart.map(i => (
-                    <div key={i.id} className="text-sm">
-                      <div className="flex items-center justify-between">
-                        <span className="font-medium">{i.name} × {i.qty||1}</span>
-                        <span className="font-bold">{currency(lineTotal(i))}</span>
-                      </div>
-                      {i.items && <div className="text-gray-600 flex flex-wrap gap-1 mt-1">{i.items.map(x => <span key={x.id} className="px-1.5 py-0.5 border border-gray-200 rounded-lg">{x.name}</span>)}</div>}
-                    </div>
-                  ))}
-                </div>
-                <div className="flex items-center justify-between mt-4 text-lg"><span className="font-bold">Do zapłaty</span><span className="font-extrabold">{currency(total)}</span></div>
-                <button onClick={submit} className="w-full mt-4 bg-brand-yellow text-gray-900 font-semibold rounded-xl px-4 py-3">Płatność online</button>
-              </aside>
-            </div>
-          </div>
-        </section>
-      );
-    }
-
-    // --- Router ---
-    const Router = () => {
-      const [route, setRoute] = useState(window.location.hash || '#/');
-      useEffect(()=>{
-        const onHash = () => setRoute(window.location.hash || '#/');
-        window.addEventListener('hashchange', onHash);
-        return ()=> window.removeEventListener('hashchange', onHash);
-      },[]);
-      useEffect(()=> { lucide.createIcons(); }, [route]);
-
-      if(route.startsWith('#/box/')) {
-        const id = route.split('/')[2];
-        return <BoxBuilder boxId={id} />
-      }
-      if(route === '#/koszyk') return <Koszyk />
-      if(route === '#/zamowienie') return <Zamowienie />
-      return <Home />
-    }
-
-    // helpers
-    function getCatColor(cat){
-      switch(cat){
-        case 'slone': return '#F59E0B';
-        case 'slodkie': return '#EC4899';
-        case 'zdrowe': return '#10B981';
-        case 'napoj': return '#3B82F6';
-        default: return '#6B7280';
-      }
-    }
-
     const FloatingNav = () => (
       <nav className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 w-[min(720px,92%)] liquid border border-white/50 rounded-2xl shadow-glass">
         <ul className="grid grid-cols-4">
@@ -737,5 +765,3 @@
   </script>
 </body>
 </html>
-
-
