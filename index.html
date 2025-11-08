@@ -91,16 +91,109 @@
       ],
     };
 
+    // Rozmiary boxów do konfiguratora (mały/średni/duży)
     const BOX_RULES = {
-      1: { name:'Box 1', limits: { slone:1, slodkie:1, zdrowe:0, napoj:1 }, price: 32 },
-      2: { name:'Box 2', limits: { slone:1, slodkie:1, zdrowe:1, napoj:1 }, price: 39 },
-      3: { name:'Box 3', limits: { slone:2, slodkie:1, zdrowe:2, napoj:1 }, price: 49 },
+      1: { 
+        name:'Box mały', 
+        limits: { slone:1, slodkie:1, zdrowe:0, napoj:1 }, 
+        price: 38 
+      },
+      2: { 
+        name:'Box średni', 
+        limits: { slone:1, slodkie:1, zdrowe:1, napoj:1 }, 
+        price: 58 
+      },
+      3: { 
+        name:'Box duży', 
+        limits: { slone:2, slodkie:1, zdrowe:2, napoj:1 }, 
+        price: 79 
+      },
     };
 
+    // 3 gotowe boxy (mały/średni/duży), każdy z wersją klasyczną i vege
     const READY_BOXES = [
-      { id:'rb1', name:'Protein Power', price:39, items:[MENU.slone[1], MENU.zdrowe[0], MENU.napoj[2]] },
-      { id:'rb2', name:'Sweet&Salty',   price:35, items:[MENU.slone[0], MENU.slodkie[0], MENU.napoj[1]] },
-      { id:'rb3', name:'Fit Day',       price:42, items:[MENU.zdrowe[1], MENU.slodkie[2], MENU.napoj[2], MENU.slone[2]] },
+      {
+        id: 'small',
+        name: 'Box mały',
+        price: 38,
+        variants: [
+          {
+            id: 'small-classic',
+            label: 'Klasyczny',
+            items: [
+              { id:'small-kurczak', name:'Kanapka z kurczakiem' },
+              { id:'small-musli',   name:'Musli granola' },
+              { id:'small-sok',     name:'Sok pomarańczowy' },
+            ],
+          },
+          {
+            id: 'small-vege',
+            label: 'Mały vege',
+            items: [
+              { id:'small-vege-jajeczna', name:'Kanapka z pastą jajeczną' },
+              { id:'small-vege-musli',    name:'Musli granola' },
+              { id:'small-vege-sok',      name:'Sok pomarańczowy' },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'medium',
+        name: 'Box średni',
+        price: 58,
+        variants: [
+          {
+            id: 'medium-classic',
+            label: 'Średni klasyczny',
+            items: [
+              { id:'med-kurczak',   name:'Kanapka z kurczakiem' },
+              { id:'med-musli',     name:'Musli granola' },
+              { id:'med-sok',       name:'Sok pomarańczowy' },
+              { id:'med-cezar',     name:'Sałatka Caesar' },
+            ],
+          },
+          {
+            id: 'medium-vege',
+            label: 'Średni vege',
+            items: [
+              { id:'med-vege-jajko-avo',  name:'Kanapka z pastą jajeczną i awokado' },
+              { id:'med-vege-burak-kozi', name:'Sałatka z burakiem i kozim serem' },
+              { id:'med-vege-musli',      name:'Musli granola' },
+              { id:'med-vege-sok',        name:'Sok pomarańczowy' },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'large',
+        name: 'Box duży',
+        price: 79,
+        variants: [
+          {
+            id: 'large-classic',
+            label: 'Duży klasyczny',
+            items: [
+              { id:'lg-kurczak',    name:'Kanapka z kurczakiem' },
+              { id:'lg-indyk',      name:'Kanapka z indykiem' },
+              { id:'lg-cezar',      name:'Sałatka Caesar' },
+              { id:'lg-tost',       name:'Tost francuski' },
+              { id:'lg-musli',      name:'Musli granola' },
+              { id:'lg-sok',        name:'Sok pomarańczowy' },
+            ],
+          },
+          {
+            id: 'large-vege',
+            label: 'Duży vege',
+            items: [
+              { id:'lg-vege-jajko-avo',  name:'Kanapka z pastą jajeczną i awokado' },
+              { id:'lg-vege-camembert',  name:'Kanapka z serem camembert i awokado' },
+              { id:'lg-vege-tost',       name:'Tost francuski' },
+              { id:'lg-vege-musli',      name:'Musli granola' },
+              { id:'lg-vege-sok',        name:'Sok pomarańczowy' },
+            ],
+          },
+        ],
+      },
     ];
 
     // --- Utils ---
@@ -177,7 +270,7 @@
       const setQty  = (id, qty) => setCart(prev => prev.map(i => i.id === id ? {...i, qty: Math.max(1, qty|0)} : i));
       const incQty  = (id) => setCart(prev => prev.map(i => i.id === id ? {...i, qty: (i.qty||1)+1} : i));
       const decQty  = (id) => setCart(prev => prev.map(i => i.id === id ? {...i, qty: Math.max(1, (i.qty||1)-1)} : i));
-      const clear   = () => setCart([]); // <— brakująca funkcja
+      const clear   = () => setCart([]);
       const lineTotal = (i) => (i.price || 0) * (i.qty || 1);
       const total  = useMemo(() => cart.reduce((s,i)=> s + lineTotal(i), 0), [cart]);
       return <CartContext.Provider value={{cart, add, remove, setQty, incQty, decQty, clear, lineTotal, total}}>{children}</CartContext.Provider>
@@ -223,26 +316,47 @@
       </a>
     );
 
-    // >>> ZDJĘCIA W OFERCIE LUNCHOWEJ (miniatura na karcie)
-    const ReadyBoxCard = ({box, onAdd}) => {
-      const cover = box.items?.[0]?.img; // miniatura z pierwszej pozycji
+    // >>> GOTOWE BOXY: 3 rozmiary, każdy z wariantem klasycznym i vege
+    const ReadyBoxCard = ({ box, onAdd }) => {
       return (
         <div className="bg-white border border-gray-200 rounded-2xl p-5 flex flex-col">
-          {cover && (
-            <img src={cover} alt={box.name} loading="lazy" className="w-full h-36 object-cover rounded-xl mb-3"/>
-          )}
           <div className="flex items-center justify-between">
             <h3 className="font-bold text-lg">{box.name}</h3>
             <span className="font-extrabold">{currency(box.price)}</span>
           </div>
-          <div className="mt-3 flex flex-wrap gap-2 text-xs text-gray-600">
-            {box.items.map((it)=> (
-              <span key={it.id||it.name} className="px-2 py-1 rounded-full border border-gray-200">{it.name}</span>
+          <p className="mt-1 text-xs text-gray-500">
+            Wybierz wersję klasyczną lub vege.
+          </p>
+
+          <div className="mt-4 grid grid-cols-1 gap-4">
+            {box.variants.map(variant => (
+              <div
+                key={variant.id}
+                className="border border-gray-200 rounded-xl p-3"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="text-sm font-semibold">{variant.label}</div>
+                </div>
+                <div className="mt-2 flex flex-wrap gap-2 text-xs text-gray-600">
+                  {variant.items.map(it => (
+                    <span
+                      key={it.id}
+                      className="px-2 py-1 rounded-full border border-gray-200"
+                    >
+                      {it.name}
+                    </span>
+                  ))}
+                </div>
+                <button
+                  onClick={() => onAdd(variant)}
+                  className="mt-3 inline-flex items-center justify-center gap-2 bg-brand-yellow text-gray-900 font-semibold px-4 py-2 rounded-xl hover:scale-[1.02] transition"
+                >
+                  <i data-lucide="plus" className="w-4 h-4"></i>
+                  Dodaj {variant.label.toLowerCase()} do koszyka
+                </button>
+              </div>
             ))}
           </div>
-          <button onClick={onAdd} className="mt-4 inline-flex items-center justify-center gap-2 bg-brand-yellow text-gray-900 font-semibold px-4 py-2 rounded-xl hover:scale-[1.02] transition">
-            <i data-lucide="plus" className="w-4 h-4"></i> Dodaj do koszyka
-          </button>
         </div>
       );
     };
@@ -305,7 +419,7 @@
 
       return (
         <section className="py-10">
-          <div className="max-w-6xl mx:auto px-4"></div>
+          <div className="max-w-6xl mx-auto px-4"></div>
           <div className="max-w-6xl mx-auto px-4">
             <a href="#/" className="inline-flex items-center gap-2 text-sm text-gray-600"><i data-lucide="arrow-left" className="w-4 h-4"></i> Wróć</a>
 
@@ -337,14 +451,13 @@
                       {selected[catId].map(it => (
                         <div key={it.id} className="w-full text-left text-sm bg-white border border-gray-200 rounded-lg p-2 flex items-center justify-between gap-2">
                           <span className="truncate">{it.name}</span>
-                    <button
-                      onClick={() => removeItem(catId, it.id)}
-                      className="shrink-0 w-6 h-6 grid place-items-center rounded-md bg-red-500 text-white"
-                      aria-label={`Usuń ${it.name}`}
-                      title="Usuń">
-                      <span className="text-lg leading-none">−</span>
-                    </button>
-
+                          <button
+                            onClick={() => removeItem(catId, it.id)}
+                            className="shrink-0 w-6 h-6 grid place-items-center rounded-md bg-red-500 text-white"
+                            aria-label={`Usuń ${it.name}`}
+                            title="Usuń">
+                            <span className="text-lg leading-none">−</span>
+                          </button>
                         </div>
                       ))}
                     </div>
@@ -663,7 +776,7 @@
           {/* Zapakuj boxa */}
           <section id="zapakuj" className="py-12 md:py-20 bg-gradient-to-b from-white to-brand-light">
             <div className="max-w-6xl mx-auto px-4">
-              <SectionTitle eyebrow="Konfigurator" title="Zapakuj swojego boxa" subtitle="Wybierz wariant i skomponuj idealny zestaw metodą przeciągnij-i-upuść."/>
+              <SectionTitle eyebrow="Konfigurator" title="Zapakuj swojego boxa" subtitle="Wybierz rozmiar boxa i skomponuj idealny zestaw metodą przeciągnij-i-upuść."/>
               <div className="mt-8 grid md:grid-cols-3 gap-6">
                 {Object.entries(BOX_RULES).map(([id, def]) => (
                   <BoxCard key={id} id={id} name={def.name} limits={def.limits} price={def.price} />
@@ -675,13 +788,24 @@
           {/* Oferta lunchowa */}
           <section id="oferta" className="py-12 md:py-20">
             <div className="max-w-6xl mx-auto px-4">
-              <SectionTitle eyebrow="Gotowe zestawy" title="Oferta lunchowa" subtitle="Wybierz jeden z naszych bestsellerów i dodaj do koszyka."/>
+              <SectionTitle
+                eyebrow="Gotowe zestawy"
+                title="Oferta lunchowa"
+                subtitle="Wybierz gotowy box w rozmiarze małym, średnim lub dużym — klasyczny albo vege. Albo zapakuj własnego boxa w konfiguratorze powyżej."
+              />
               <div className="mt-8 grid md:grid-cols-3 gap-6">
                 {READY_BOXES.map(rb => (
                   <ReadyBoxCard
                     key={rb.id}
                     box={rb}
-                    onAdd={()=> add({ type:'ready-box', name: rb.name, price: rb.price, items: rb.items })}
+                    onAdd={(variant) =>
+                      add({
+                        type: 'ready-box',
+                        name: `${rb.name} — ${variant.label}`,
+                        price: rb.price,
+                        items: variant.items,
+                      })
+                    }
                   />
                 ))}
               </div>
@@ -765,9 +889,3 @@
   </script>
 </body>
 </html>
-
-
-
-
-
-
