@@ -110,90 +110,97 @@
       },
     };
 
-    // 3 gotowe boxy (mały/średni/duży), każdy z wersją klasyczną i vege
-    const READY_BOXES = [
+    // --- Oferta śniadaniowa: 3 gotowe boxy (mały/średni/duży, każdy z klasycznym i vege) ---
+    const BREAKFAST_BOXES = [
       {
         id: 'small',
-        name: 'Box mały',
+        name: 'Box śniadaniowy mały',
         price: 38,
         variants: [
           {
             id: 'small-classic',
-            label: 'Klasyczny',
+            label: 'Mały klasyczny',
             items: [
-              { id:'small-kurczak', name:'Kanapka z kurczakiem' },
-              { id:'small-musli',   name:'Musli granola' },
-              { id:'small-sok',     name:'Sok pomarańczowy' },
+              { id:'s-kurczak', name:'Kanapka z kurczakiem' },
+              { id:'s-musli',   name:'Musli granola' },
+              { id:'s-sok',     name:'Sok pomarańczowy' },
             ],
           },
           {
             id: 'small-vege',
             label: 'Mały vege',
             items: [
-              { id:'small-vege-jajeczna', name:'Kanapka z pastą jajeczną' },
-              { id:'small-vege-musli',    name:'Musli granola' },
-              { id:'small-vege-sok',      name:'Sok pomarańczowy' },
+              { id:'s-vege-jajeczna', name:'Kanapka z pastą jajeczną' },
+              { id:'s-vege-musli',    name:'Musli granola' },
+              { id:'s-vege-sok',      name:'Sok pomarańczowy' },
             ],
           },
         ],
       },
       {
         id: 'medium',
-        name: 'Box średni',
+        name: 'Box śniadaniowy średni',
         price: 58,
         variants: [
           {
             id: 'medium-classic',
             label: 'Średni klasyczny',
             items: [
-              { id:'med-kurczak',   name:'Kanapka z kurczakiem' },
-              { id:'med-musli',     name:'Musli granola' },
-              { id:'med-sok',       name:'Sok pomarańczowy' },
-              { id:'med-cezar',     name:'Sałatka Caesar' },
+              { id:'m-kurczak',   name:'Kanapka z kurczakiem' },
+              { id:'m-musli',     name:'Musli granola' },
+              { id:'m-sok',       name:'Sok pomarańczowy' },
+              { id:'m-cezar',     name:'Sałatka Caesar' },
             ],
           },
           {
             id: 'medium-vege',
             label: 'Średni vege',
             items: [
-              { id:'med-vege-jajko-avo',  name:'Kanapka z pastą jajeczną i awokado' },
-              { id:'med-vege-burak-kozi', name:'Sałatka z burakiem i kozim serem' },
-              { id:'med-vege-musli',      name:'Musli granola' },
-              { id:'med-vege-sok',        name:'Sok pomarańczowy' },
+              { id:'m-vege-jajko-avo',  name:'Kanapka z pastą jajeczną i awokado' },
+              { id:'m-vege-burak-kozi', name:'Sałatka z burakiem i kozim serem' },
+              { id:'m-vege-musli',      name:'Musli granola' },
+              { id:'m-vege-sok',        name:'Sok pomarańczowy' },
             ],
           },
         ],
       },
       {
         id: 'large',
-        name: 'Box duży',
+        name: 'Box śniadaniowy duży',
         price: 79,
         variants: [
           {
             id: 'large-classic',
             label: 'Duży klasyczny',
             items: [
-              { id:'lg-kurczak',    name:'Kanapka z kurczakiem' },
-              { id:'lg-indyk',      name:'Kanapka z indykiem' },
-              { id:'lg-cezar',      name:'Sałatka Caesar' },
-              { id:'lg-tost',       name:'Tost francuski' },
-              { id:'lg-musli',      name:'Musli granola' },
-              { id:'lg-sok',        name:'Sok pomarańczowy' },
+              { id:'l-kurczak',    name:'Kanapka z kurczakiem' },
+              { id:'l-indyk',      name:'Kanapka z indykiem' },
+              { id:'l-cezar',      name:'Sałatka Caesar' },
+              { id:'l-tost',       name:'Tost francuski' },
+              { id:'l-musli',      name:'Musli granola' },
+              { id:'l-sok',        name:'Sok pomarańczowy' },
             ],
           },
           {
             id: 'large-vege',
             label: 'Duży vege',
             items: [
-              { id:'lg-vege-jajko-avo',  name:'Kanapka z pastą jajeczną i awokado' },
-              { id:'lg-vege-camembert',  name:'Kanapka z serem camembert i awokado' },
-              { id:'lg-vege-tost',       name:'Tost francuski' },
-              { id:'lg-vege-musli',      name:'Musli granola' },
-              { id:'lg-vege-sok',        name:'Sok pomarańczowy' },
+              { id:'l-vege-jajko-avo',  name:'Kanapka z pastą jajeczną i awokado' },
+              { id:'l-vege-camembert',  name:'Kanapka z serem camembert i awokado' },
+              { id:'l-vege-tost',       name:'Tost francuski' },
+              { id:'l-vege-musli',      name:'Musli granola' },
+              { id:'l-vege-sok',        name:'Sok pomarańczowy' },
             ],
           },
         ],
       },
+    ];
+
+    // --- Oferta lunchowa: osobne gotowe zestawy lunchowe ---
+    const LUNCH_BOXES = [
+      { id:'rb1', name:'Protein Power', price:39, items:[MENU.slone[1], MENU.zdrowe[0], MENU.napoj[2]] },
+      { id:'rb2', name:'Sweet & Salty', price:35, items:[MENU.slone[0], MENU.slodkie[0], MENU.napoj[1]] },
+      { id:'rb3', name:'Fit Day',       price:42, items:[MENU.zdrowe[1], MENU.slodkie[2], MENU.napoj[2], MENU.slone[2]] },
     ];
 
     // --- Utils ---
@@ -221,10 +228,11 @@
         <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
           <Logo />
           <nav className="hidden md:flex items-center gap-6 text-sm">
-            <a href="#zapakuj" className="hover:text-gray-900 text-gray-600">Zapakuj boxa</a>
-            <a href="#oferta"  className="hover:text-gray-900 text-gray-600">Oferta lunchowa</a>
-            <a href="#o-nas"   className="hover:text-gray-900 text-gray-600">O nas</a>
-            <a href="#kontakt" className="hover:text-gray-900 text-gray-600">Kontakt</a>
+            <a href="#zapakuj"   className="hover:text-gray-900 text-gray-600">Zapakuj boxa</a>
+            <a href="#sniadanie" className="hover:text-gray-900 text-gray-600">Śniadania</a>
+            <a href="#oferta"    className="hover:text-gray-900 text-gray-600">Lunch</a>
+            <a href="#o-nas"     className="hover:text-gray-900 text-gray-600">O nas</a>
+            <a href="#kontakt"   className="hover:text-gray-900 text-gray-600">Kontakt</a>
           </nav>
           <CartButton />
         </div>
@@ -238,11 +246,18 @@
             <h1 className="text-4xl md:text-5xl font-extrabold leading-tight">
               Złóż swojego <span className="text-brand-yellow">Lunch Boxa</span> i <span className="underline decoration-brand-yellow">zamów online</span>
             </h1>
-            <p className="mt-4 text-gray-600 max-w-prose">Wybieraj z kategorii: słone, słodkie, zdrowe i napoje. Przeciągaj pozycje i twórz idealny zestaw.</p>
-            <div className="mt-6">
+            <p className="mt-4 text-gray-600 max-w-prose">
+              Wybieraj z kategorii: słone, słodkie, zdrowe i napoje. 
+              Skorzystaj z gotowych boxów śniadaniowych albo zapakuj własny zestaw.
+            </p>
+            <div className="mt-6 flex flex-wrap gap-3">
               <a href="#zapakuj" className="inline-flex items-center gap-2 bg-brand-yellow text-gray-900 font-semibold px-6 py-3 rounded-xl2 shadow-soft hover:scale-[1.02] transition">
                 <i data-lucide="shopping-bag" className="w-5 h-5"></i>
-                Zamów Posiłek
+                Zapakuj własnego boxa
+              </a>
+              <a href="#sniadanie" className="inline-flex items-center gap-2 border border-gray-300 bg-white text-gray-900 font-semibold px-6 py-3 rounded-xl2 shadow-soft hover:scale-[1.02] transition">
+                <i data-lucide="sunrise" className="w-5 h-5"></i>
+                Zobacz śniadania
               </a>
             </div>
           </div>
@@ -316,8 +331,8 @@
       </a>
     );
 
-    // >>> GOTOWE BOXY: 3 rozmiary, każdy z wariantem klasycznym i vege
-    const ReadyBoxCard = ({ box, onAdd }) => {
+    // >>> Karty oferty śniadaniowej
+    const BreakfastBoxCard = ({ box, onAdd }) => {
       return (
         <div className="bg-white border border-gray-200 rounded-2xl p-5 flex flex-col">
           <div className="flex items-center justify-between">
@@ -325,7 +340,7 @@
             <span className="font-extrabold">{currency(box.price)}</span>
           </div>
           <p className="mt-1 text-xs text-gray-500">
-            Wybierz wersję klasyczną lub vege.
+            Każdy box w wersji klasycznej lub vege.
           </p>
 
           <div className="mt-4 grid grid-cols-1 gap-4">
@@ -336,6 +351,11 @@
               >
                 <div className="flex items-center justify-between">
                   <div className="text-sm font-semibold">{variant.label}</div>
+                  {variant.label.toLowerCase().includes('vege') && (
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100">
+                      vege
+                    </span>
+                  )}
                 </div>
                 <div className="mt-2 flex flex-wrap gap-2 text-xs text-gray-600">
                   {variant.items.map(it => (
@@ -357,6 +377,40 @@
               </div>
             ))}
           </div>
+        </div>
+      );
+    };
+
+    // >>> Karty oferty lunchowej
+    const LunchBoxCard = ({box, onAdd}) => {
+      const cover = box.items?.[0]?.img;
+      return (
+        <div className="bg-white border border-gray-200 rounded-2xl p-5 flex flex-col">
+          {cover && (
+            <img
+              src={cover}
+              alt={box.name}
+              loading="lazy"
+              className="w-full h-36 object-cover rounded-xl mb-3"
+            />
+          )}
+          <div className="flex items-center justify-between">
+            <h3 className="font-bold text-lg">{box.name}</h3>
+            <span className="font-extrabold">{currency(box.price)}</span>
+          </div>
+          <div className="mt-3 flex flex-wrap gap-2 text-xs text-gray-600">
+            {box.items.map((it)=> (
+              <span key={it.id||it.name} className="px-2 py-1 rounded-full border border-gray-200">
+                {it.name}
+              </span>
+            ))}
+          </div>
+          <button
+            onClick={onAdd}
+            className="mt-4 inline-flex items-center justify-center gap-2 bg-brand-yellow text-gray-900 font-semibold px-4 py-2 rounded-xl hover:scale-[1.02] transition"
+          >
+            <i data-lucide="plus" className="w-4 h-4"></i> Dodaj do koszyka
+          </button>
         </div>
       );
     };
@@ -776,10 +830,37 @@
           {/* Zapakuj boxa */}
           <section id="zapakuj" className="py-12 md:py-20 bg-gradient-to-b from-white to-brand-light">
             <div className="max-w-6xl mx-auto px-4">
-              <SectionTitle eyebrow="Konfigurator" title="Zapakuj swojego boxa" subtitle="Wybierz rozmiar boxa i skomponuj idealny zestaw metodą przeciągnij-i-upuść."/>
+              <SectionTitle eyebrow="Konfigurator" title="Zapakuj swojego boxa" subtitle="Wybierz rozmiar boxa (mały, średni, duży) i skomponuj idealny zestaw metodą przeciągnij-i-upuść."/>
               <div className="mt-8 grid md:grid-cols-3 gap-6">
                 {Object.entries(BOX_RULES).map(([id, def]) => (
                   <BoxCard key={id} id={id} name={def.name} limits={def.limits} price={def.price} />
+                ))}
+              </div>
+            </div>
+          </section>
+
+          {/* Oferta śniadaniowa */}
+          <section id="sniadanie" className="py-12 md:py-20">
+            <div className="max-w-6xl mx-auto px-4">
+              <SectionTitle
+                eyebrow="Oferta śniadaniowa"
+                title="Boxy śniadaniowe"
+                subtitle="Gotowe zestawy śniadaniowe w trzech rozmiarach — każdy w wersji klasycznej oraz vege."
+              />
+              <div className="mt-8 grid md:grid-cols-3 gap-6">
+                {BREAKFAST_BOXES.map(bx => (
+                  <BreakfastBoxCard
+                    key={bx.id}
+                    box={bx}
+                    onAdd={(variant) =>
+                      add({
+                        type: 'breakfast-box',
+                        name: `${bx.name} — ${variant.label}`,
+                        price: bx.price,
+                        items: variant.items,
+                      })
+                    }
+                  />
                 ))}
               </div>
             </div>
@@ -789,23 +870,16 @@
           <section id="oferta" className="py-12 md:py-20">
             <div className="max-w-6xl mx-auto px-4">
               <SectionTitle
-                eyebrow="Gotowe zestawy"
-                title="Oferta lunchowa"
-                subtitle="Wybierz gotowy box w rozmiarze małym, średnim lub dużym — klasyczny albo vege. Albo zapakuj własnego boxa w konfiguratorze powyżej."
+                eyebrow="Oferta lunchowa"
+                title="Lunch boxy"
+                subtitle="Szybkie zestawy lunchowe — idealne na przerwę w pracy lub na wynos."
               />
               <div className="mt-8 grid md:grid-cols-3 gap-6">
-                {READY_BOXES.map(rb => (
-                  <ReadyBoxCard
+                {LUNCH_BOXES.map(rb => (
+                  <LunchBoxCard
                     key={rb.id}
                     box={rb}
-                    onAdd={(variant) =>
-                      add({
-                        type: 'ready-box',
-                        name: `${rb.name} — ${variant.label}`,
-                        price: rb.price,
-                        items: variant.items,
-                      })
-                    }
+                    onAdd={()=> add({ type:'lunch-box', name: rb.name, price: rb.price, items: rb.items })}
                   />
                 ))}
               </div>
@@ -855,15 +929,15 @@
             </a>
           </li>
           <li>
-            <a href="#o-nas" className="flex flex-col items-center py-3 text-sm font-medium">
-              <i data-lucide="badge-check" className="w-5 h-5"></i>
-              O nas
+            <a href="#sniadanie" className="flex flex-col items-center py-3 text-sm font-medium">
+              <i data-lucide="sunrise" className="w-5 h-5"></i>
+              Śniadania
             </a>
           </li>
           <li>
             <a href="#oferta" className="flex flex-col items-center py-3 text-sm font-medium">
               <i data-lucide="app-window" className="w-5 h-5"></i>
-              Menu
+              Lunch
             </a>
           </li>
           <li>
