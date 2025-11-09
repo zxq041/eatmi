@@ -58,6 +58,35 @@
     .logo-glow {
       animation: logo-glow 3s ease-in-out infinite;
     }
+
+    /* Animacja toasta i pasek postępu */
+    @keyframes toast-enter {
+      0% {
+        opacity: 0;
+        transform: translateY(16px) scale(0.96);
+      }
+      60% {
+        opacity: 1;
+        transform: translateY(0) scale(1.02);
+      }
+      100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    @keyframes toast-progress {
+      from { width: 100%; }
+      to   { width: 0%; }
+    }
+
+    .toast-enter {
+      animation: toast-enter 0.35s ease-out forwards;
+    }
+
+    .toast-bar {
+      animation: toast-progress 2.5s linear forwards;
+    }
   </style>
 </head>
 <body class="bg-brand-light text-gray-900">
@@ -247,13 +276,39 @@
         timeoutRef.current = setTimeout(() => setToast(null), 2500);
       };
 
+      const close = () => {
+        if (timeoutRef.current) clearTimeout(timeoutRef.current);
+        setToast(null);
+      };
+
       return (
         <ToastContext.Provider value={{ show }}>
           {children}
           {toast && (
-            <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-[80]">
-              <div className="bg-gray-900 text-white text-sm px-4 py-2 rounded-full shadow-soft">
-                {toast}
+            <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-[80] pointer-events-none">
+              <div className="relative pointer-events-auto toast-enter bg-white/95 border border-emerald-200 shadow-glass rounded-2xl px-4 py-3 min-w-[260px] max-w-[90vw] flex items-start gap-3">
+                <div className="w-9 h-9 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 text-lg">
+                  ✓
+                </div>
+                <div className="flex-1">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.12em] text-emerald-600">
+                    Dodano do koszyka
+                  </div>
+                  <div className="text-sm text-gray-900 mt-0.5">
+                    {toast}
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={close}
+                  className="ml-2 text-gray-400 hover:text-gray-600 text-xl leading-none"
+                  aria-label="Zamknij powiadomienie"
+                >
+                  ×
+                </button>
+                <div className="absolute left-4 right-4 -bottom-1.5 h-1 rounded-full overflow-hidden bg-emerald-50">
+                  <div className="toast-bar h-full bg-emerald-400"></div>
+                </div>
               </div>
             </div>
           )}
@@ -298,7 +353,6 @@
       <section className="relative overflow-hidden">
         <div className="max-w-6xl mx-auto px-4 py-12 md:py-20 grid md:grid-cols-2 gap-10 items-center">
           <div>
-            {/* duży napis z lekką animacją */}
             <div className="inline-flex items-center gap-2 mb-3 px-4 py-2 rounded-full bg-white/80 border border-gray-200 shadow-soft animate-pulse">
               <span className="text-xl">👋</span>
               <span className="text-sm md:text-base font-semibold text-gray-900">
@@ -551,7 +605,6 @@
               <i data-lucide="arrow-left" className="w-4 h-4"></i> Wróć
             </a>
 
-            {/* BOX (strefa zrzutu) */}
             <div className="mt-4 bg-white border border-gray-200 rounded-2xl p-5 shadow-soft">
               <div className="flex items-center justify-between">
                 <h2 className="font-extrabold text-xl">{rules.name}</h2>
@@ -568,7 +621,6 @@
                 )}
               </p>
 
-              {/* podgląd wybranych pozycji */}
               <div
                 onDragOver={onDragOver}
                 onDragLeave={onDragLeave}
@@ -607,7 +659,6 @@
                 ))}
               </div>
 
-              {/* zachęta po skompletowaniu */}
               {canAddToCart && (
                 <div className="mt-3 flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-xl p-3 text-sm text-amber-900">
                   <span className="text-lg">✨</span>
@@ -633,7 +684,6 @@
               </button>
             </div>
 
-            {/* PANEL WYBORU */}
             <div className="mt-6">
               {currentCatId ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -685,7 +735,6 @@
               )}
             </div>
 
-            {/* Modal podglądu zdjęcia */}
             {preview.open && (
               <div className="fixed inset-0 z-[60] bg-black/70 flex items-center justify-center p-4" onClick={closePreview}>
                 <div className="relative bg-white rounded-2xl shadow-glass max-w-3xl w-full">
@@ -701,7 +750,6 @@
               </div>
             )}
 
-            {/* Modal informacji o przeciąganiu */}
             {hintOpen && (
               <div className="fixed inset-0 z-[70] bg-black/60 flex items-center justify-center p-4" role="dialog" aria-modal="true">
                 <div className="relative w-full max-w-lg bg-white rounded-2xl shadow-glass border border-gray-200 p-5">
@@ -829,7 +877,6 @@
                   </aside>
                 </div>
 
-                {/* DODATKI */}
                 <div className="mt-10 border-t border-gray-200 pt-6">
                   <h3 className="text-lg font-bold flex items-center gap-2">
                     <span>Może dorzucisz coś jeszcze?</span>
@@ -1094,7 +1141,6 @@
         <>
           <Hero />
 
-          {/* Zapakuj boxa */}
           <section id="zapakuj" className="py-12 md:py-20 bg-gradient-to-b from-white to-brand-light">
             <div className="max-w-6xl mx-auto px-4">
               <SectionTitle
@@ -1116,7 +1162,6 @@
             </div>
           </section>
 
-          {/* Oferta śniadaniowa */}
           <section id="sniadanie" className="py-12 md:py-20">
             <div className="max-w-6xl mx-auto px-4">
               <SectionTitle
@@ -1143,7 +1188,6 @@
             </div>
           </section>
 
-          {/* Oferta lunchowa */}
           <section id="oferta" className="py-12 md:py-20">
             <div className="max-w-6xl mx-auto px-4">
               <SectionTitle
@@ -1163,7 +1207,6 @@
             </div>
           </section>
 
-          {/* O nas */}
           <section id="o-nas" className="py-12">
             <div className="max-w-6xl mx-auto px-4 grid md:grid-cols-2 gap-10 items-center">
               <img
@@ -1195,7 +1238,6 @@
             </div>
           </section>
 
-          {/* Kontakt */}
           <section id="kontakt" className="py-12 bg-white">
             <div className="max-w-6xl mx-auto px-4">
               <SectionTitle
@@ -1273,4 +1315,3 @@
   </script>
 </body>
 </html>
-
