@@ -45,6 +45,19 @@
     .neo{box-shadow: 10px 10px 30px rgba(0,0,0,.08), -10px -10px 30px rgba(255,255,255,.7)}
     .liquid{background:linear-gradient(135deg, rgba(255,255,255,.6), rgba(255,255,255,.35)); backdrop-filter: blur(12px);}
     .drag-hover{outline:2px dashed #11182733; outline-offset: -8px}
+
+    /* Delikatna animacja "glow" wokół logotypu eatmi */
+    @keyframes logo-glow {
+      0%,100% {
+        box-shadow: 0 0 0 0 rgba(255,193,7,0.0);
+      }
+      50% {
+        box-shadow: 0 0 0 8px rgba(255,193,7,0.35);
+      }
+    }
+    .logo-glow {
+      animation: logo-glow 3s ease-in-out infinite;
+    }
   </style>
 </head>
 <body class="bg-brand-light text-gray-900">
@@ -93,20 +106,20 @@
 
     // Rozmiary boxów do konfiguratora (mały/średni/duży)
     const BOX_RULES = {
-      1: { 
-        name:'Box mały', 
-        limits: { slone:1, slodkie:1, zdrowe:0, napoj:1 }, 
-        price: 38 
+      1: {
+        name:'Box mały',
+        limits: { slone:1, slodkie:1, zdrowe:0, napoj:1 },
+        price: 38
       },
-      2: { 
-        name:'Box średni', 
-        limits: { slone:1, slodkie:1, zdrowe:1, napoj:1 }, 
-        price: 58 
+      2: {
+        name:'Box średni',
+        limits: { slone:1, slodkie:1, zdrowe:1, napoj:1 },
+        price: 58
       },
-      3: { 
-        name:'Box duży', 
-        limits: { slone:2, slodkie:1, zdrowe:2, napoj:1 }, 
-        price: 79 
+      3: {
+        name:'Box duży',
+        limits: { slone:2, slodkie:1, zdrowe:2, napoj:1 },
+        price: 79
       },
     };
 
@@ -250,12 +263,19 @@
 
     // --- Components ---
     const Logo = () => (
-      <div className="flex items-center gap-2">
-        <div className="w-9 h-9 rounded-2xl bg-brand-yellow flex items-center justify-center shadow-soft">
-          <i data-lucide="sandwich" className="w-5 h-5"></i>
+      <a href="#/" className="flex items-center gap-3 group">
+        <div className="w-10 h-10 rounded-2xl bg-white flex items-center justify-center border border-gray-100 overflow-hidden shadow-soft logo-glow">
+          <img
+            src="https://i.imgur.com/f9TN0Gh.png"
+            alt="eatmi.pl — logo"
+            loading="lazy"
+            className="w-9 h-9 object-contain transition-transform duration-500 group-hover:-rotate-6 group-hover:scale-110"
+          />
         </div>
-        <span className="font-extrabold tracking-tight">eatmi<span className="text-brand-yellow">.pl</span></span>
-      </div>
+        <span className="font-extrabold tracking-tight">
+          eatmi<span className="text-brand-yellow">.pl</span>
+        </span>
+      </a>
     );
 
     const Header = () => (
@@ -291,7 +311,7 @@
               <span className="underline decoration-brand-yellow">zamów online</span>
             </h1>
             <p className="mt-4 text-gray-600 max-w-prose">
-              Wybieraj z kategorii: słone, słodkie, zdrowe i napoje. 
+              Wybieraj z kategorii: słone, słodkie, zdrowe i napoje.
               Skorzystaj z gotowych boxów śniadaniowych albo zapakuj własny zestaw.
             </p>
             <div className="mt-6 flex flex-wrap gap-3">
@@ -306,10 +326,10 @@
             </div>
           </div>
           <div className="relative">
-            <img 
-              alt="Burger" 
-              loading="lazy" 
-              className="w-full rounded-2xl shadow-soft neo" 
+            <img
+              alt="Burger"
+              loading="lazy"
+              className="w-full rounded-2xl shadow-soft neo"
               src="image.png"
             />
             <div className="absolute -bottom-4 -right-4 bg-white rounded-xl2 px-4 py-3 shadow-glass border border-gray-200 text-sm">
