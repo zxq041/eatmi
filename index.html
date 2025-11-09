@@ -274,6 +274,13 @@
       </header>
     );
 
+    const GreetingBar = () => (
+      <div className="bg-gray-900 text-white text-sm text-center py-2">
+        <span className="mr-1">👋</span>
+        Cześć, miło Cię widzieć! Złóż dziś swój box w kilka kliknięć.
+      </div>
+    );
+
     const Hero = () => (
       <section className="relative overflow-hidden">
         <div className="max-w-6xl mx-auto px-4 py-12 md:py-20 grid md:grid-cols-2 gap-10 items-center">
@@ -539,7 +546,8 @@
               </p>
 
               {/* strefy podglądu wybranych elementów per kategoria + X do usuwania */}
-              <div onDragOver={onDragOver} onDragLeave={onDragLeave} onDrop={onDropEnd} className="mt-4 rounded-2xl border-2 border-dashed border-gray-200 p-4 grid grid-cols-2 md:grid-cols-4 gap-3">
+              <div onDragOver={onDragOver} onDragLeave={onDragLeave} onDrop={onDropEnd} className="mt-4 rounded-2xl border-2 border-dashed border-gray-2
+00 p-4 grid grid-cols-2 md:grid-cols-4 gap-3">
                 {orderCats.map(catId => (
                   <div key={catId} className="bg-gray-50 rounded-xl p-3 border border-gray-200">
                     <div className="flex items-center justify-between text-xs">
@@ -1038,9 +1046,12 @@
       <ToastProvider>
         <CartProvider>
           <Header />
+          <GreetingBar />
           <Router />
           <FloatingNav />
-          <footer className="py-16 text-center text-sm text-gray-500">© {new Date().getFullYear()} eatmi.pl • Wszystkie prawa zastrzeżone</footer>
+          <footer className="py-16 text-center text-sm text-gray-500">
+            © {new Date().getFullYear()} eatmi.pl • Wszystkie prawa zastrzeżone
+          </footer>
         </CartProvider>
       </ToastProvider>
     )
@@ -1049,3 +1060,4 @@
   </script>
 </body>
 </html>
+
