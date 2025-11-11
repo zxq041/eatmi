@@ -34,9 +34,9 @@
       }
     }
   </script>
-  
+  <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
-  
+  <!-- React 18 + Babel -->
   <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
   <script crossorigin src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -47,7 +47,7 @@
     .liquid{background:linear-gradient(135deg, rgba(255,255,255,.6), rgba(255,255,255,.35)); backdrop-filter: blur(12px);}
     .drag-hover{outline:2px dashed #11182733; outline-offset: -8px}
 
-  
+    /* Delikatna animacja "glow" wokół logotypu eatmi */
     @keyframes logo-glow {
       0%,100% {
         box-shadow: 0 0 0 0 rgba(255,193,7,0.0);
@@ -60,7 +60,7 @@
       animation: logo-glow 3s ease-in-out infinite;
     }
 
-    
+    /* Animacja toasta i pasek postępu */
     @keyframes toast-enter {
       0% {
         opacity: 0;
@@ -91,19 +91,19 @@
   </style>
 </head>
 <body class="bg-brand-light text-gray-900">
-  
+  <!-- Happy Hour Bar -->
   <div id="topBar" class="w-full text-center text-sm bg-brand-yellow text-gray-900 py-1.5 font-medium">
     <span>🎉 Dziś −15% z kodem <b>HAPPY15</b> do 15:00</span>
   </div>
 
-  
+  <!-- App Root -->
   <div id="root"></div>
 
-  
+  <!-- React App -->
   <script type="text/babel">
     const { useState, useEffect, useMemo } = React;
 
-    
+    // --- Data ---
     const CATEGORIES = [
       { id:'slone',   name:'Słone',   color:'cat.slone' },
       { id:'slodkie', name:'Słodkie', color:'cat.slodkie' },
@@ -134,7 +134,7 @@
       ],
     };
 
-    
+    // Rozmiary boxów do konfiguratora (mały/średni/duży)
     const BOX_RULES = {
       1: {
         name:'Box mały',
@@ -153,7 +153,7 @@
       },
     };
 
-    
+    // --- Oferta śniadaniowa: 3 gotowe boxy ---
     const BREAKFAST_BOXES = [
       {
         id: 'small',
@@ -239,21 +239,21 @@
       },
     ];
 
-    
+    // --- Oferta lunchowa ---
     const LUNCH_BOXES = [
       { id:'rb1', name:'Protein Power', price:39, items:[MENU.slone[1], MENU.zdrowe[0], MENU.napoj[2]] },
       { id:'rb2', name:'Sweet & Salty', price:35, items:[MENU.slone[0], MENU.slodkie[0], MENU.napoj[1]] },
       { id:'rb3', name:'Fit Day',       price:42, items:[MENU.zdrowe[1], MENU.slodkie[2], MENU.napoj[2], MENU.slone[2]] },
     ];
 
-    
+    // --- Dodatki w koszyku ---
     const EXTRA_ITEMS = [
       { id:'extra-brownie',  name:'Brownie do kawy',       price: 9 },
       { id:'extra-lemoniada',name:'Domowa lemoniada 0,4l', price: 12 },
       { id:'extra-cookie',   name:'Cookie czekoladowe',    price: 7 },
     ];
 
-  
+    // --- Utils ---
     const useLocalStorage = (key, initial) => {
       const [state, setState] = useState(() => {
         try { return JSON.parse(localStorage.getItem(key)) ?? initial } catch { return initial }
@@ -263,7 +263,7 @@
     };
     const currency = (n) => new Intl.NumberFormat('pl-PL', { style:'currency', currency:'PLN' }).format(n);
 
-    
+    // --- Toast (powiadomienia) ---
     const ToastContext = React.createContext();
     const useToast = () => React.useContext(ToastContext);
 
@@ -317,7 +317,7 @@
       );
     };
 
-    
+    // --- Components ---
     const Logo = () => (
       <a href="#/" className="flex items-center gap-3 group">
         <div className="w-10 h-10 rounded-2xl bg-white flex items-center justify-center border border-gray-100 overflow-hidden shadow-soft logo-glow">
@@ -334,7 +334,7 @@
       </a>
     );
 
-    
+    // Cart Context
     const CartContext = React.createContext();
     const CartProvider = ({children}) => {
       const [cart, setCart] = useLocalStorage('eatmi-cart', []);
@@ -384,7 +384,7 @@
           </nav>
 
           <div className="flex items-center gap-3">
-            {}
+            {/* Konto / member button desktop */}
             <button
               type="button"
               onClick={onOpenAuth}
@@ -394,7 +394,7 @@
               <span>Konto</span>
             </button>
 
-            {}
+            {/* Mobile ikonka konta */}
             <button
               type="button"
               onClick={onOpenAuth}
@@ -483,7 +483,7 @@
       </a>
     );
 
-    
+    // >>> Karty oferty śniadaniowej
     const BreakfastBoxCard = ({ box, onAdd }) => {
       return (
         <div className="bg-white border border-gray-200 rounded-2xl p-5 flex flex-col">
@@ -533,7 +533,7 @@
       );
     };
 
-    
+    // >>> Karty oferty lunchowej
     const LunchBoxCard = ({box, onAdd}) => {
       const cover = box.items?.[0]?.img;
       return (
@@ -567,25 +567,25 @@
       );
     };
 
-    -
+    // --- BoxBuilder ---
     const BoxBuilder = ({boxId}) => {
       const rules = BOX_RULES[boxId];
       const orderCats = CATEGORIES.filter(c => rules.limits[c.id] > 0).map(c => c.id);
       const [selected, setSelected] = useState({ slone:[], slodkie:[], zdrowe:[], napoj:[] });
       const { add } = useCart();
 
-      
+      // Podgląd zdjęcia (modal)
       const [preview, setPreview] = useState({ open:false, src:'', alt:'' });
       const openPreview  = (src, alt) => setPreview({ open:true, src, alt });
       const closePreview = () => setPreview({ open:false, src:'', alt:'' });
 
-      
+      // Modal info o przeciąganiu
       const [hintOpen, setHintOpen] = useState(() => {
         try { return !JSON.parse(localStorage.getItem('eatmi-dnd-hint-dismissed')||'false'); } catch { return true; }
       });
       const closeHint = () => { setHintOpen(false); try { localStorage.setItem('eatmi-dnd-hint-dismissed', 'true'); } catch {} };
 
-      
+      // Aktywna kategoria
       const currentCatId = useMemo(() => {
         for (const id of orderCats) {
           const lim = rules.limits[id] || 0;
@@ -809,7 +809,7 @@
       );
     }
 
-    
+    // >>> Koszyk + dodatki (NAPRAWIONY RESPONSYWNY UKŁAD)
     const Koszyk = () => {
       const { cart, remove, clear, total, incQty, decQty, setQty, lineTotal, add } = useCart();
       const goToCheckout = () => window.location.hash = '#/zamowienie';
@@ -1115,7 +1115,7 @@
       );
     }
 
-    
+    // --- Router ---
     const Router = () => {
       const [route, setRoute] = useState(window.location.hash || '#/');
       useEffect(()=>{
@@ -1160,9 +1160,9 @@
       <label className="text-xs uppercase tracking-wider text-gray-500">{children}</label>
     );
 
-    
+    // --- Modal logowania / rejestracji ---
     const AuthModal = ({ open, onClose }) => {
-      const [mode, setMode] = useState('login'); 
+      const [mode, setMode] = useState('login'); // 'login' | 'register'
       const [form, setForm] = useState({
         email: '',
         password: '',
@@ -1229,7 +1229,7 @@
               </p>
             </div>
 
-            {}
+            {/* Social logins: tylko Google i Apple */}
             <div className="flex flex-col gap-2 mb-4">
               <button
                 type="button"
@@ -1281,7 +1281,7 @@
               <div className="h-px flex-1 bg-gray-200" />
             </div>
 
-            {}
+            {/* Formularz e-mail + hasło */}
             <form onSubmit={handleSubmit} className="space-y-3">
               <div>
                 <Label>Adres e-mail</Label>
@@ -1370,7 +1370,7 @@
       );
     };
 
-  
+    // --- Home ---
     const Home = () => {
       const { add } = useCart();
       return (
@@ -1534,7 +1534,7 @@
       </nav>
     );
 
-    
+    // --- Helper: wykrywanie urządzeń mobilnych ---
     const isMobileDevice = () => {
       if (typeof navigator === 'undefined') return false;
       const ua = navigator.userAgent || '';
@@ -1567,7 +1567,7 @@
       return { type: 'other', browser: 'other' };
     };
 
-  
+    // --- Modal: Dodaj do ekranu głównego ---
     const AddToHomePrompt = ({ open, onClose, platform }) => {
       if (!open) return null;
 
@@ -1575,7 +1575,7 @@
       const isAndroid = platform?.type === 'android';
 
       const handleAddNow = () => {
-       
+        // delikatnie przewiń do góry, żeby użytkownik widział pasek adresu / menu przeglądarki
         try {
           window.scrollTo({ top: 0, behavior: 'smooth' });
         } catch {}
@@ -1684,11 +1684,11 @@
       const [platform, setPlatform] = useState({ type: 'other', browser: 'other' });
 
       useEffect(() => {
-     
+        // odśwież ikony, gdy otwieramy / zamykamy modal konta
         lucide.createIcons();
       }, [authOpen]);
 
-     
+      // Obsługa prompta "Dodaj do ekranu głównego" tylko na mobile / tabletach
       useEffect(() => {
         if (!isMobileDevice()) return;
         try {
@@ -1699,7 +1699,7 @@
         const detected = detectPlatform();
         setPlatform(detected);
 
-       
+        // małe opóźnienie, żeby nie wyskakiwało dokładnie w tej samej chwili co ładowanie strony
         const t = setTimeout(() => {
           setA2hsOpen(true);
         }, 2500);
@@ -1735,3 +1735,4 @@
   </script>
 </body>
 </html>
+
