@@ -761,7 +761,7 @@
 
             {preview.open && (
               <div className="fixed inset-0 z-[60] bg-black/70 flex items-center justify-center p-4" onClick={closePreview}>
-                <div className="relative bg-white rounded-2xl shadow-glass max-w-3xl w-full">
+                <div className="relative bg-white rounded-2xl shadow-glass max-w-3xl w-full" onClick={(e)=>e.stopPropagation()}>
                   <button
                     onClick={closePreview}
                     className="absolute top-2 right-2 p-2 rounded-full bg-white/90 border border-gray-200 shadow-soft"
@@ -1531,13 +1531,185 @@
       </nav>
     );
 
+    // --- Helper: wykrywanie urządzeń mobilnych ---
+    const isMobileDevice = () => {
+      if (typeof navigator === 'undefined') return false;
+      const ua = navigator.userAgent || '';
+      const mobileRegex = /Mobi|Android|iPhone|iPad|iPod/i;
+      const byUA = mobileRegex.test(ua);
+      const byWidth = typeof window !== 'undefined' ? window.innerWidth <= 1024 : false;
+      return byUA || byWidth;
+    };
+
+    const detectPlatform = () => {
+      if (typeof navigator === 'undefined') return { type: 'other', browser: 'other' };
+      const ua = navigator.userAgent || '';
+      const isIOS = /iPhone|iPad|iPod/i.test(ua);
+      const isAndroid = /Android/i.test(ua);
+      const isSafari = /Safari/i.test(ua) && !/Chrome/i.test(ua);
+      const isChrome = /Chrome|CriOS/i.test(ua);
+
+      if (isIOS) {
+        return {
+          type: 'ios',
+          browser: isSafari ? 'safari' : (isChrome ? 'chrome' : 'other')
+        };
+      }
+      if (isAndroid) {
+        return {
+          type: 'android',
+          browser: isChrome ? 'chrome' : 'other'
+        };
+      }
+      return { type: 'other', browser: 'other' };
+    };
+
+    // --- Modal: Dodaj do ekranu głównego ---
+    const AddToHomePrompt = ({ open, onClose, platform }) => {
+      if (!open) return null;
+
+      const isIOS = platform?.type === 'ios';
+      const isAndroid = platform?.type === 'android';
+
+      const handleAddNow = () => {
+        // delikatnie przewiń do góry, żeby użytkownik widział pasek adresu / menu przeglądarki
+        try {
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        } catch {}
+        onClose();
+      };
+
+      return (
+        <div
+          className="fixed inset-0 z-[85] bg-black/55 flex items-center justify-center px-4"
+          role="dialog"
+          aria-modal="true"
+          onClick={onClose}
+        >
+          <div
+            className="relative w-full max-w-md bg-white rounded-2xl shadow-glass border border-gray-200 p-5"
+            onClick={(e)=>e.stopPropagation()}
+          >
+            <button
+              type="button"
+              onClick={onClose}
+              className="absolute top-3 right-3 p-2 rounded-full bg-white border border-gray-200 shadow-soft hover:bg-gray-50"
+              aria-label="Zamknij okno"
+            >
+              <span className="text-lg leading-none">×</span>
+            </button>
+
+            <div className="flex items-start gap-3">
+              <div className="shrink-0 w-10 h-10 rounded-xl grid place-items-center bg-brand-yellow">
+                <span className="text-xl">📱</span>
+              </div>
+              <div>
+                <div className="text-xs uppercase tracking-[0.16em] text-gray-500 font-semibold">
+                  Szybsze zamawianie
+                </div>
+                <h3 className="text-lg font-extrabold mt-1">
+                  Dodaj eatmi.pl do ekranu głównego
+                </h3>
+                <p className="mt-1 text-sm text-gray-600">
+                  Dzięki temu zamówisz lunch boxa jak z aplikacji — 1 klik z ekranu telefonu.
+                  Łatwiej też wrócisz do nas, gdy pojawią się nowości w menu.
+                </p>
+
+                <div className="mt-4 text-sm text-gray-800 space-y-2">
+                  {isIOS && (
+                    <>
+                      <p className="font-semibold">Na iPhonie / iPadzie (Safari):</p>
+                      <ol className="list-decimal list-inside space-y-1 text-sm">
+                        <li>Upewnij się, że pasek na dole pokazuje ikonę <b>Udostępnij</b> (kwadracik z strzałką w górę).</li>
+                        <li>Dotknij <b>Udostępnij</b>.</li>
+                        <li>Przewiń listę opcji w dół.</li>
+                        <li>Wybierz <b>„Dodaj do ekranu początkowego”</b>.</li>
+                        <li>Potwierdź przyciskiem <b>Dodaj</b>.</li>
+                      </ol>
+                    </>
+                  )}
+
+                  {isAndroid && (
+                    <>
+                      <p className="font-semibold">Na Androidzie (np. Chrome):</p>
+                      <ol className="list-decimal list-inside space-y-1 text-sm">
+                        <li>Dotknij przycisku <b>⋮</b> lub <b>☰</b> w prawym górnym rogu przeglądarki.</li>
+                        <li>Wybierz opcję <b>„Dodaj do ekranu głównego”</b> albo <b>„Zainstaluj aplikację”</b>.</li>
+                        <li>Potwierdź, wybierając <b>Dodaj</b>.</li>
+                      </ol>
+                    </>
+                  )}
+
+                  {!isIOS && !isAndroid && (
+                    <>
+                      <p className="font-semibold">Na swoim urządzeniu mobilnym:</p>
+                      <ol className="list-decimal list-inside space-y-1 text-sm">
+                        <li>Otwórz menu przeglądarki (ikona <b>Udostępnij</b> / <b>⋮</b> / <b>☰</b>).</li>
+                        <li>Wybierz pozycję w stylu <b>„Dodaj do ekranu głównego”</b> lub <b>„Zainstaluj aplikację”</b>.</li>
+                        <li>Potwierdź, klikając <b>Dodaj</b>.</li>
+                      </ol>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-5 flex flex-col sm:flex-row gap-3 sm:justify-end">
+              <button
+                type="button"
+                onClick={onClose}
+                className="w-full sm:w-auto px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold text-gray-700 bg-white"
+              >
+                Nie teraz
+              </button>
+              <button
+                type="button"
+                onClick={handleAddNow}
+                className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-gray-900 text-white text-sm font-semibold"
+              >
+                Pokaż pasek i dodaj
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+    };
+
     const App = () => {
       const [authOpen, setAuthOpen] = useState(false);
+      const [a2hsOpen, setA2hsOpen] = useState(false);
+      const [platform, setPlatform] = useState({ type: 'other', browser: 'other' });
 
       useEffect(() => {
-        // odśwież ikony, gdy otwieramy / zamykamy modal
+        // odśwież ikony, gdy otwieramy / zamykamy modal konta
         lucide.createIcons();
       }, [authOpen]);
+
+      // Obsługa prompta "Dodaj do ekranu głównego" tylko na mobile / tabletach
+      useEffect(() => {
+        if (!isMobileDevice()) return;
+        try {
+          const dismissed = JSON.parse(localStorage.getItem('eatmi-a2hs-dismissed') || 'false');
+          if (dismissed) return;
+        } catch {}
+
+        const detected = detectPlatform();
+        setPlatform(detected);
+
+        // małe opóźnienie, żeby nie wyskakiwało dokładnie w tej samej chwili co ładowanie strony
+        const t = setTimeout(() => {
+          setA2hsOpen(true);
+        }, 2500);
+
+        return () => clearTimeout(t);
+      }, []);
+
+      const handleCloseA2hs = () => {
+        setA2hsOpen(false);
+        try {
+          localStorage.setItem('eatmi-a2hs-dismissed', 'true');
+        } catch {}
+      };
 
       return (
         <ToastProvider>
@@ -1550,6 +1722,7 @@
             </footer>
 
             <AuthModal open={authOpen} onClose={() => setAuthOpen(false)} />
+            <AddToHomePrompt open={a2hsOpen} onClose={handleCloseA2hs} platform={platform} />
           </CartProvider>
         </ToastProvider>
       );
@@ -1559,4 +1732,3 @@
   </script>
 </body>
 </html>
-
