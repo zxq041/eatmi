@@ -419,7 +419,7 @@
       </header>
     );
 
-    /* ZMIENIONY HERO – bez dużego zdjęcia, z małym animowanym widgetem */
+    /* ZMIENIONY HERO – bez dużego zdjęcia, z małym przyjemnym widgetem „3 kroki” */
     const Hero = () => (
       <section className="relative overflow-hidden">
         <div className="max-w-6xl mx-auto px-4 py-12 md:py-20 grid md:grid-cols-2 gap-10 items-center">
@@ -461,28 +461,28 @@
               <div className="relative">
                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-black/5 text-xs font-semibold text-gray-800 mb-3">
                   <i data-lucide="sparkles" className="w-4 h-4 animate-spin-slow"></i>
-                  <span>Twoje pudełko, Twoje zasady</span>
+                  <span>3 proste kroki</span>
                 </div>
 
                 <h2 className="text-lg md:text-xl font-extrabold text-gray-900">
-                  Zamów jak z aplikacji
+                  Twój idealny box w 3 krokach
                 </h2>
                 <p className="mt-1 text-sm text-gray-800/80">
-                  Dodaj eatmi.pl do ekranu głównego i wracaj do ulubionych boxów w kilka sekund.
+                  Wybierz rozmiar, dodaj ulubione smaki i zamów bez dzwonienia.
                 </p>
 
                 <div className="mt-4 grid grid-cols-3 gap-3 text-center text-xs">
                   <div className="bg-white/80 rounded-xl px-3 py-2 shadow-soft">
-                    <div className="font-extrabold text-sm">2k+</div>
-                    <div className="text-gray-500">zamówień</div>
+                    <div className="text-[10px] tracking-[0.14em] uppercase text-gray-400">Krok 1</div>
+                    <div className="font-semibold mt-0.5 text-gray-900">Wybierz box</div>
                   </div>
                   <div className="bg-white/80 rounded-xl px-3 py-2 shadow-soft">
-                    <div className="font-extrabold text-sm">4.9★</div>
-                    <div className="text-gray-500">ocena</div>
+                    <div className="text-[10px] tracking-[0.14em] uppercase text-gray-400">Krok 2</div>
+                    <div className="font-semibold mt-0.5 text-gray-900">Dodaj smaki</div>
                   </div>
                   <div className="bg-white/80 rounded-xl px-3 py-2 shadow-soft animate-pulse">
-                    <div className="font-extrabold text-sm">15 min</div>
-                    <div className="text-gray-500">do złożenia</div>
+                    <div className="text-[10px] tracking-[0.14em] uppercase text-gray-400">Krok 3</div>
+                    <div className="font-semibold mt-0.5 text-gray-900">Kliknij „Zamów”</div>
                   </div>
                 </div>
               </div>
@@ -847,7 +847,7 @@
       );
     }
 
-    // >>> Koszyk + dodatki (NAPRAWIONY RESPONSYWNY UKŁAD)
+    // >>> Koszyk + dodatki
     const Koszyk = () => {
       const { cart, remove, clear, total, incQty, decQty, setQty, lineTotal, add } = useCart();
       const goToCheckout = () => window.location.hash = '#/zamowienie';
@@ -1229,7 +1229,7 @@
       };
 
       const switchToLogin = () => {
-        setMode('login');
+               setMode('login');
         setForm({ email: '', password: '', confirm: '' });
       };
 
@@ -1613,7 +1613,6 @@
       const isAndroid = platform?.type === 'android';
 
       const handleAddNow = () => {
-        // delikatnie przewiń do góry, żeby użytkownik widział pasek adresu / menu przeglądarki
         try {
           window.scrollTo({ top: 0, behavior: 'smooth' });
         } catch {}
@@ -1722,11 +1721,9 @@
       const [platform, setPlatform] = useState({ type: 'other', browser: 'other' });
 
       useEffect(() => {
-        // odśwież ikony, gdy otwieramy / zamykamy modal konta
         lucide.createIcons();
       }, [authOpen]);
 
-      // Obsługa prompta "Dodaj do ekranu głównego" tylko na mobile / tabletach
       useEffect(() => {
         if (!isMobileDevice()) return;
         try {
@@ -1737,7 +1734,6 @@
         const detected = detectPlatform();
         setPlatform(detected);
 
-        // małe opóźnienie, żeby nie wyskakiwało dokładnie w tej samej chwili co ładowanie strony
         const t = setTimeout(() => {
           setA2hsOpen(true);
         }, 2500);
