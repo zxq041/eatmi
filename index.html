@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>eatmi.pl — Zamów boxy i kanapki online</title>
-  <meta name="description" content="eatmi.pl — Zamów boxy śniadaniowe, boxy lunchowe, kanapki, sałatki, desery i napoje online." />
+  <title>eatmi.pl — Złóż swojego boxa i zamów online</title>
+  <meta name="description" content="eatmi.pl — Zapakuj własnego lunch boxa lub wybierz gotowy zestaw. Zamów online szybko i wygodnie." />
   <link rel="icon" type="image/png" href="favicon.png">
   <link rel="manifest" href="/manifest.webmanifest">
   <script src="https://cdn.tailwindcss.com"></script>
@@ -17,6 +17,12 @@
               yellow: '#FFC107',
               dark: '#111827',
               light: '#F9FAFB'
+            },
+            cat: {
+              slone: '#F59E0B',
+              slodkie: '#EC4899',
+              zdrowe: '#10B981',
+              napoj: '#3B82F6'
             }
           },
           boxShadow: {
@@ -41,6 +47,7 @@
     .liquid{background:linear-gradient(135deg, rgba(255,255,255,.6), rgba(255,255,255,.35)); backdrop-filter: blur(12px);}
     .drag-hover{outline:2px dashed #11182733; outline-offset: -8px}
 
+    /* Delikatna animacja "glow" wokół logotypu eatmi */
     @keyframes logo-glow {
       0%,100% {
         box-shadow: 0 0 0 0 rgba(255,193,7,0.0);
@@ -53,6 +60,7 @@
       animation: logo-glow 3s ease-in-out infinite;
     }
 
+    /* Animacja toasta i pasek postępu */
     @keyframes toast-enter {
       0% {
         opacity: 0;
@@ -80,6 +88,15 @@
     .toast-bar {
       animation: toast-progress 2.5s linear forwards;
     }
+
+    /* Delikatna wolna rotacja ikony */
+    @keyframes spin-slow {
+      from { transform: rotate(0deg); }
+      to   { transform: rotate(360deg); }
+    }
+    .animate-spin-slow {
+      animation: spin-slow 6s linear infinite;
+    }
   </style>
 </head>
 <body class="bg-brand-light text-gray-900">
@@ -95,138 +112,155 @@
   <script type="text/babel">
     const { useState, useEffect, useMemo } = React;
 
-    // --- Dane kategorii ---
-    const PRODUCT_CATEGORIES = [
-      {
-        id: 'boxy-sniadaniowe',
-        name: 'Boxy śniadaniowe',
-        icon: 'package-open',
-        description: 'Gotowe zestawy śniadaniowe w trzech rozmiarach.'
-      },
-      {
-        id: 'boxy-lunchowe',
-        name: 'Boxy lunchowe',
-        icon: 'utensils-crossed',
-        description: 'Syte boxy lunchowe idealne na przerwę w pracy.'
-      },
-      {
-        id: 'kanapki',
-        name: 'Kanapki',
-        icon: 'sandwich',
-        description: 'Świeże kanapki na ciepło i na zimno.'
-      },
-      {
-        id: 'salatki',
-        name: 'Sałatki',
-        icon: 'leaf',
-        description: 'Lekkie i sycące sałatki.'
-      },
-      {
-        id: 'desery',
-        name: 'Desery',
-        icon: 'ice-cream',
-        description: 'Słodkie zakończenie Twojego zamówienia.'
-      },
-      {
-        id: 'napoje',
-        name: 'Napoje',
-        icon: 'cup-soda',
-        description: 'Zimne napoje, soki i kawy mrożone.'
-      },
+    // --- Data ---
+    const CATEGORIES = [
+      { id:'slone',   name:'Słone',   color:'cat.slone' },
+      { id:'slodkie', name:'Słodkie', color:'cat.slodkie' },
+      { id:'zdrowe',  name:'Zdrowe',  color:'cat.zdrowe' },
+      { id:'napoj',   name:'Napój',   color:'cat.napoj' },
     ];
 
-    // --- Menu kategorii (przykładowe pozycje) ---
-
-    // 4 typy × 3 rozmiary = 12 boxów śniadaniowych
-    const BREAKFAST_PRODUCTS = [
-      { id:'bs-klasyk-s',  name:'Box śniadaniowy Klasyk — mały',   price: 29, subtitle:'Bułka, jajko, ser, warzywa' },
-      { id:'bs-klasyk-m',  name:'Box śniadaniowy Klasyk — średni', price: 39, subtitle:'Bułka, jajko, ser, szynka, jogurt' },
-      { id:'bs-klasyk-l',  name:'Box śniadaniowy Klasyk — duży',   price: 49, subtitle:'2 kanapki, jogurt, owoc, sok' },
-
-      { id:'bs-fit-s',     name:'Box śniadaniowy Fit — mały',      price: 31, subtitle:'Owsianka, owoc, orzechy' },
-      { id:'bs-fit-m',     name:'Box śniadaniowy Fit — średni',    price: 41, subtitle:'Owsianka, jogurt, owoc, sok' },
-      { id:'bs-fit-l',     name:'Box śniadaniowy Fit — duży',      price: 51, subtitle:'Owsianka, jogurt, owoc, smoothie' },
-
-      { id:'bs-vege-s',    name:'Box śniadaniowy Vege — mały',     price: 29, subtitle:'Kanapka vege, hummus, warzywa' },
-      { id:'bs-vege-m',    name:'Box śniadaniowy Vege — średni',   price: 39, subtitle:'Kanapka vege, sałatka, owoc' },
-      { id:'bs-vege-l',    name:'Box śniadaniowy Vege — duży',     price: 49, subtitle:'2 kanapki vege, sałatka, sok' },
-
-      { id:'bs-slodki-s',  name:'Box śniadaniowy Słodki — mały',   price: 29, subtitle:'Croissant, dżem, kawałek brownie' },
-      { id:'bs-slodki-m',  name:'Box śniadaniowy Słodki — średni', price: 39, subtitle:'Croissant, jogurt z granolą, sok' },
-      { id:'bs-slodki-l',  name:'Box śniadaniowy Słodki — duży',   price: 49, subtitle:'Croissant, tost francuski, jogurt, sok' },
-    ];
-
-    // 4 typy × 3 rozmiary = 12 boxów lunchowych
-    const LUNCH_PRODUCTS = [
-      { id:'bl-klasyk-s',  name:'Box lunchowy Klasyk — mały',      price: 35, subtitle:'Burger, frytki mini, sos' },
-      { id:'bl-klasyk-m',  name:'Box lunchowy Klasyk — średni',    price: 42, subtitle:'Burger, frytki, napój' },
-      { id:'bl-klasyk-l',  name:'Box lunchowy Klasyk — duży',      price: 49, subtitle:'Burger, frytki duże, napój, deser' },
-
-      { id:'bl-fit-s',     name:'Box lunchowy Fit — mały',         price: 37, subtitle:'Sałatka z kurczakiem, woda' },
-      { id:'bl-fit-m',     name:'Box lunchowy Fit — średni',       price: 44, subtitle:'Sałatka, pieczywo, woda' },
-      { id:'bl-fit-l',     name:'Box lunchowy Fit — duży',         price: 51, subtitle:'Sałatka, pieczywo, napój, deser' },
-
-      { id:'bl-vege-s',    name:'Box lunchowy Vege — mały',        price: 35, subtitle:'Bowl vege, woda' },
-      { id:'bl-vege-m',    name:'Box lunchowy Vege — średni',      price: 42, subtitle:'Bowl vege, napój' },
-      { id:'bl-vege-l',    name:'Box lunchowy Vege — duży',        price: 49, subtitle:'Bowl vege, napój, deser' },
-
-      { id:'bl-office-s',  name:'Box lunchowy Office — mały',      price: 36, subtitle:'Kanapka, chipsy, napój' },
-      { id:'bl-office-m',  name:'Box lunchowy Office — średni',    price: 43, subtitle:'Kanapka, sałatka mini, napój' },
-      { id:'bl-office-l',  name:'Box lunchowy Office — duży',      price: 50, subtitle:'2 kanapki, sałatka, napój' },
-    ];
-
-    // 8 kanapek
-    const SANDWICHES = [
-      { id:'k-kurczak',   name:'Kanapka z kurczakiem',          price: 18, subtitle:'Kurczak, sałata, sos jogurtowy' },
-      { id:'k-indyk',     name:'Kanapka z indykiem',            price: 19, subtitle:'Indyk, ser, warzywa, sos miodowo-musztardowy' },
-      { id:'k-szarpana',  name:'Kanapka z szarpaną wieprzowiną',price: 21, subtitle:'Pulled pork, coleslaw, pikle' },
-      { id:'k-klasyk',    name:'Kanapka klasyczna',             price: 16, subtitle:'Szynka, ser, ogórek, masło' },
-      { id:'k-vege-hummus',name:'Kanapka vege z hummusem',      price: 17, subtitle:'Hummus, warzywa, pestki' },
-      { id:'k-vege-avo',  name:'Kanapka z awokado i jajkiem',   price: 19, subtitle:'Awokado, jajko, rukola' },
-      { id:'k-panini',    name:'Panini z kurczakiem',           price: 20, subtitle:'Grillowana kanapka z kurczakiem i serem' },
-      { id:'k-panini-vege',name:'Panini vege',                  price: 19, subtitle:'Grillowana kanapka z warzywami i serem' },
-    ];
-
-    // 4 sałatki
-    const SALADS = [
-      { id:'s-cezar',   name:'Sałatka Caesar',            price: 24, subtitle:'Kurczak, parmezan, grzanki, sos Caesar' },
-      { id:'s-quinoa',  name:'Sałatka z quinoa',          price: 25, subtitle:'Quinoa, warzywa, fetą, pestki' },
-      { id:'s-vege',    name:'Sałatka vege z hummusem',   price: 23, subtitle:'Warzywa, hummus, pieczony batat' },
-      { id:'s-burak',   name:'Sałatka z burakiem i kozim serem', price: 25, subtitle:'Burak, ser kozi, rukola, orzechy' },
-    ];
-
-    // 4 desery
-    const DESSERTS = [
-      { id:'d-brownie',   name:'Brownie czekoladowe',      price: 9,  subtitle:'Gęste, mocno czekoladowe' },
-      { id:'d-cheesecake',name:'Sernik klasyczny',         price: 11, subtitle:'Na kruchym spodzie' },
-      { id:'d-cookie',    name:'Cookie z czekoladą',       price: 7,  subtitle:'Miękkie w środku, chrupiące na zewnątrz' },
-      { id:'d-fruit',     name:'Puchar owoców sezonowych', price: 10, subtitle:'Świeże, krojone owoce' },
-    ];
-
-    // 12 napojów
-    const DRINKS = [
-      { id:'n-cola-05',   name:'Cola 0,5 l',              price: 8,  subtitle:'Schłodzony napój gazowany' },
-      { id:'n-cola-zero', name:'Cola Zero 0,5 l',         price: 8,  subtitle:'Bez cukru' },
-      { id:'n-sprite',    name:'Lemon-lime 0,5 l',        price: 8,  subtitle:'Napój cytrusowy' },
-      { id:'n-fanta',     name:'Orange 0,5 l',            price: 8,  subtitle:'Napój pomarańczowy' },
-      { id:'n-water',     name:'Woda niegazowana 0,5 l',  price: 5,  subtitle:'Butelkowana' },
-      { id:'n-water-gas', name:'Woda gazowana 0,5 l',     price: 5,  subtitle:'Butelkowana' },
-      { id:'n-juice-o',   name:'Sok pomarańczowy 0,3 l',  price: 9,  subtitle:'100% owoców' },
-      { id:'n-juice-a',   name:'Sok jabłkowy 0,3 l',      price: 9,  subtitle:'NFC' },
-      { id:'n-lemonade',  name:'Lemoniada domowa 0,4 l',  price: 12, subtitle:'Cytryna, mięta, lód' },
-      { id:'n-icecoffee', name:'Kawa mrożona 0,4 l',      price: 14, subtitle:'Espresso, mleko, lód' },
-      { id:'n-tea',       name:'Herbata mrożona 0,4 l',   price: 11, subtitle:'Domowa, cytryna' },
-      { id:'n-smoothie',  name:'Smoothie owocowe 0,4 l',  price: 15, subtitle:'Miks owoców sezonowych' },
-    ];
-
-    const PRODUCTS = {
-      'boxy-sniadaniowe': BREAKFAST_PRODUCTS,
-      'boxy-lunchowe': LUNCH_PRODUCTS,
-      'kanapki': SANDWICHES,
-      'salatki': SALADS,
-      'desery': DESSERTS,
-      'napoje': DRINKS,
+    const MENU = {
+      slone: [
+        { id:'burger-chicken', name:'Chicken Burger', desc:'kurczak, miód-muszt.', img:'https://images.unsplash.com/photo-1606756790138-261d2b21cd75?q=80&w=800&auto=format&fit=crop' },
+        { id:'burger-beef',    name:'Beef Classic',   desc:'wołowina, cheddar',   img:'https://images.unsplash.com/photo-1606756790138-261d2b21cd75?q=80&w=800&auto=format&fit=crop' },
+        { id:'wrap',           name:'Wrap Tex-Mex',   desc:'kurczak, salsa',      img:'https://images.unsplash.com/photo-1606756790138-261d2b21cd75?q=80&w=800&auto=format&fit=crop' },
+      ],
+      slodkie: [
+        { id:'brownie',    name:'Brownie',    desc:'gęste, czekoladowe', img:'https://images.unsplash.com/photo-1606756790138-261d2b21cd75?q=80&w=800&auto=format&fit=crop' },
+        { id:'cheesecake', name:'Cheesecake', desc:'klasyczny',          img:'https://images.unsplash.com/photo-1606756790138-261d2b21cd75?q=80&w=800&auto=format&fit=crop' },
+        { id:'cookie',     name:'Cookie',     desc:'z czekoladą',        img:'https://images.unsplash.com/photo-1606756790138-261d2b21cd75?q=80&w=800&auto=format&fit=crop' },
+      ],
+      zdrowe: [
+        { id:'salad-caesar', name:'Sałatka Caesar', desc:'kurczak, parmezan', img:'https://images.unsplash.com/photo-1606756790138-261d2b21cd75?q=80&w=800&auto=format&fit=crop' },
+        { id:'bowl-quinoa',  name:'Bowl Quinoa',    desc:'quinoa, hummus',   img:'https://images.unsplash.com/photo-1606756790138-261d2b21cd75?q=80&w=800&auto=format&fit=crop' },
+        { id:'veggie-sticks',name:'Warzywne Sticks',desc:'marchew, dip',     img:'https://images.unsplash.com/photo-1606756790138-261d2b21cd75?q=80&w=800&auto=format&fit=crop' },
+      ],
+      napoj: [
+        { id:'cola',      name:'Cola 0,5l',   desc:'schłodzona',      img:'https://images.unsplash.com/photo-1606756790138-261d2b21cd75?q=80&w=800&auto=format&fit=crop' },
+        { id:'lemoniada', name:'Lemoniada',   desc:'domowa',          img:'https://images.unsplash.com/photo-1606756790138-261d2b21cd75?q=80&w=800&auto=format&fit=crop' },
+        { id:'woda',      name:'Woda 0,5l',   desc:'gaz./niegaz.',    img:'https://images.unsplash.com/photo-1606756790138-261d2b21cd75?q=80&w=800&auto=format&fit=crop' },
+      ],
     };
+
+    // Rozmiary boxów do konfiguratora (mały/średni/duży)
+    const BOX_RULES = {
+      1: {
+        name:'Box mały',
+        limits: { slone:1, slodkie:1, zdrowe:0, napoj:1 },
+        price: 38
+      },
+      2: {
+        name:'Box średni',
+        limits: { slone:1, slodkie:1, zdrowe:1, napoj:1 },
+        price: 58
+      },
+      3: {
+        name:'Box duży',
+        limits: { slone:2, slodkie:1, zdrowe:2, napoj:1 },
+        price: 79
+      },
+    };
+
+    // --- Oferta śniadaniowa: 3 gotowe boxy ---
+    const BREAKFAST_BOXES = [
+      {
+        id: 'small',
+        name: 'Box śniadaniowy mały',
+        price: 38,
+        variants: [
+          {
+            id: 'small-classic',
+            label: 'Mały klasyczny',
+            items: [
+              { id:'s-kurczak', name:'Kanapka z kurczakiem' },
+              { id:'s-musli',   name:'Musli granola' },
+              { id:'s-sok',     name:'Sok pomarańczowy' },
+            ],
+          },
+          {
+            id: 'small-vege',
+            label: 'Mały vege',
+            items: [
+              { id:'s-vege-jajeczna', name:'Kanapka z pastą jajeczną' },
+              { id:'s-vege-musli',    name:'Musli granola' },
+              { id:'s-vege-sok',      name:'Sok pomarańczowy' },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'medium',
+        name: 'Box śniadaniowy średni',
+        price: 58,
+        variants: [
+          {
+            id: 'medium-classic',
+            label: 'Średni klasyczny',
+            items: [
+              { id:'m-kurczak',   name:'Kanapka z kurczakiem' },
+              { id:'m-musli',     name:'Musli granola' },
+              { id:'m-sok',       name:'Sok pomarańczowy' },
+              { id:'m-cezar',     name:'Sałatka Caesar' },
+            ],
+          },
+          {
+            id: 'medium-vege',
+            label: 'Średni vege',
+            items: [
+              { id:'m-vege-jajko-avo',  name:'Kanapka z pastą jajeczną i awokado' },
+              { id:'m-vege-burak-kozi', name:'Sałatka z burakiem i kozim serem' },
+              { id:'m-vege-musli',      name:'Musli granola' },
+              { id:'m-vege-sok',        name:'Sok pomarańczowy' },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'large',
+        name: 'Box śniadaniowy duży',
+        price: 79,
+        variants: [
+          {
+            id: 'large-classic',
+            label: 'Duży klasyczny',
+            items: [
+              { id:'l-kurczak',    name:'Kanapka z kurczakiem' },
+              { id:'l-indyk',      name:'Kanapka z indykiem' },
+              { id:'l-cezar',      name:'Sałatka Caesar' },
+              { id:'l-tost',       name:'Tost francuski' },
+              { id:'l-musli',      name:'Musli granola' },
+              { id:'l-sok',        name:'Sok pomarańczowy' },
+            ],
+          },
+          {
+            id: 'large-vege',
+            label: 'Duży vege',
+            items: [
+              { id:'l-vege-jajko-avo',  name:'Kanapka z pastą jajeczną i awokado' },
+              { id:'l-vege-camembert',  name:'Kanapka z serem camembert i awokado' },
+              { id:'l-vege-tost',       name:'Tost francuski' },
+              { id:'l-vege-musli',      name:'Musli granola' },
+              { id:'l-vege-sok',        name:'Sok pomarańczowy' },
+            ],
+          },
+        ],
+      },
+    ];
+
+    // --- Oferta lunchowa ---
+    const LUNCH_BOXES = [
+      { id:'rb1', name:'Protein Power', price:39, items:[MENU.slone[1], MENU.zdrowe[0], MENU.napoj[2]] },
+      { id:'rb2', name:'Sweet & Salty', price:35, items:[MENU.slone[0], MENU.slodkie[0], MENU.napoj[1]] },
+      { id:'rb3', name:'Fit Day',       price:42, items:[MENU.zdrowe[1], MENU.slodkie[2], MENU.napoj[2], MENU.slone[2]] },
+    ];
+
+    // --- Dodatki w koszyku ---
+    const EXTRA_ITEMS = [
+      { id:'extra-brownie',  name:'Brownie do kawy',       price: 9 },
+      { id:'extra-lemoniada',name:'Domowa lemoniada 0,4l', price: 12 },
+      { id:'extra-cookie',   name:'Cookie czekoladowe',    price: 7 },
+    ];
 
     // --- Utils ---
     const useLocalStorage = (key, initial) => {
@@ -292,7 +326,7 @@
       );
     };
 
-    // --- Logo ---
+    // --- Components ---
     const Logo = () => (
       <a href="#/" className="flex items-center gap-3 group">
         <div className="w-10 h-10 rounded-2xl bg-white flex items-center justify-center border border-gray-100 overflow-hidden shadow-soft logo-glow">
@@ -309,7 +343,7 @@
       </a>
     );
 
-    // --- Koszyk (context) ---
+    // Cart Context
     const CartContext = React.createContext();
     const CartProvider = ({children}) => {
       const [cart, setCart] = useLocalStorage('eatmi-cart', []);
@@ -319,7 +353,7 @@
         const newItem = { id: (crypto?.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`), qty: 1, ...entry };
         setCart(prev => [...prev, newItem]);
         if (show) {
-          show(`Dodano: ${entry.name}`);
+          show(`Dodano do koszyka: ${entry.name}`);
         }
       };
       const remove  = (id) => setCart(prev => prev.filter(i => i.id !== id));
@@ -351,14 +385,15 @@
         <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
           <Logo />
           <nav className="hidden md:flex items-center gap-6 text-sm">
-            <a href="#kategorie" className="hover:text-gray-900 text-gray-600">Menu</a>
-            <a href="#/kategoria/boxy-sniadaniowe" className="hover:text-gray-900 text-gray-600">Śniadania</a>
-            <a href="#/kategoria/boxy-lunchowe" className="hover:text-gray-900 text-gray-600">Lunch</a>
-            <a href="#o-nas" className="hover:text-gray-900 text-gray-600">O nas</a>
-            <a href="#kontakt" className="hover:text-gray-900 text-gray-600">Kontakt</a>
+            <a href="#zapakuj"   className="hover:text-gray-900 text-gray-600">Zapakuj boxa</a>
+            <a href="#sniadanie" className="hover:text-gray-900 text-gray-600">Śniadania</a>
+            <a href="#oferta"    className="hover:text-gray-900 text-gray-600">Lunch</a>
+            <a href="#o-nas"     className="hover:text-gray-900 text-gray-600">O nas</a>
+            <a href="#kontakt"   className="hover:text-gray-900 text-gray-600">Kontakt</a>
           </nav>
 
           <div className="flex items-center gap-3">
+            {/* Konto / member button desktop */}
             <button
               type="button"
               onClick={onOpenAuth}
@@ -368,6 +403,7 @@
               <span>Konto</span>
             </button>
 
+            {/* Mobile ikonka konta */}
             <button
               type="button"
               onClick={onOpenAuth}
@@ -383,47 +419,76 @@
       </header>
     );
 
+    /* ZMIENIONY HERO – bez dużego zdjęcia, z małym animowanym widgetem */
     const Hero = () => (
       <section className="relative overflow-hidden">
         <div className="max-w-6xl mx-auto px-4 py-12 md:py-20 grid md:grid-cols-2 gap-10 items-center">
           <div>
-            <div className="inline-flex items-center gap-2 mb-3 px-4 py-2 rounded-full bg-white/80 border border-gray-200 shadow-soft">
+            <div className="inline-flex items-center gap-2 mb-3 px-4 py-2 rounded-full bg-white/80 border border-gray-200 shadow-soft animate-pulse">
               <span className="text-xl">👋</span>
               <span className="text-sm md:text-base font-semibold text-gray-900">
-                Cześć, na co masz dziś ochotę?
+                Cześć, miło Cię widzieć — na co masz dziś ochotę?
               </span>
             </div>
 
             <h1 className="text-4xl md:text-5xl font-extrabold leading-tight">
-              Wybierz kategorię i{' '}
-              <span className="text-brand-yellow">zamów online</span>
+              Złóż swojego <span className="text-brand-yellow">Lunch Boxa</span> i{' '}
+              <span className="underline decoration-brand-yellow">zamów online</span>
             </h1>
             <p className="mt-4 text-gray-600 max-w-prose">
-              Boxy śniadaniowe i lunchowe, kanapki, sałatki, desery i napoje. 
-              Jak w kiosku w restauracji — wybierasz kategorię, klikasz pozycje i finalizujesz zamówienie.
+              Wybieraj z kategorii: słone, słodkie, zdrowe i napoje.
+              Skorzystaj z gotowych boxów śniadaniowych albo zapakuj własny zestaw.
             </p>
             <div className="mt-6 flex flex-wrap gap-3">
-              <a href="#kategorie" className="inline-flex items-center gap-2 bg-brand-yellow text-gray-900 font-semibold px-6 py-3 rounded-xl2 shadow-soft hover:scale-[1.02] transition">
+              <a href="#zapakuj" className="inline-flex items-center gap-2 bg-brand-yellow text-gray-900 font-semibold px-6 py-3 rounded-xl2 shadow-soft hover:scale-[1.02] transition">
                 <i data-lucide="shopping-bag" className="w-5 h-5"></i>
-                Przeglądaj menu
+                Zapakuj własnego boxa
               </a>
-              <a href="#/kategoria/boxy-sniadaniowe" className="inline-flex items-center gap-2 border border-gray-300 bg-white text-gray-900 font-semibold px-6 py-3 rounded-xl2 shadow-soft hover:scale-[1.02] transition">
-                <i data-lucide="package-open" className="w-5 h-5"></i>
-                Zobacz boxy śniadaniowe
+              <a href="#sniadanie" className="inline-flex items-center gap-2 border border-gray-300 bg-white text-gray-900 font-semibold px-6 py-3 rounded-xl2 shadow-soft hover:scale-[1.02] transition">
+                <i data-lucide="sunrise" className="w-5 h-5"></i>
+                Zobacz śniadania
               </a>
             </div>
           </div>
+
+          {/* Nowy mały animowany widget zamiast zdjęcia */}
           <div className="relative">
-            <img
-              alt="Przykładowy box"
-              loading="lazy"
-              className="w-full rounded-2xl shadow-soft neo"
-              src="image.png"
-            />
-            <div className="absolute -bottom-4 -right-4 bg-white rounded-xl2 px-4 py-3 shadow-glass border border-gray-200 text-sm">
-              ⭐ 4.9/5 — 2k+ zamówień
+            <div className="w-full rounded-2xl shadow-soft neo bg-gradient-to-br from-brand-yellow to-amber-200 px-6 py-5 md:px-8 md:py-7 overflow-hidden">
+              {/* delikatne tło */}
+              <div className="pointer-events-none absolute -right-10 -top-10 w-32 h-32 rounded-full bg-white/30 blur-3xl" />
+              <div className="pointer-events-none absolute -left-8 bottom-[-40px] w-28 h-28 rounded-full bg-white/20 blur-3xl" />
+
+              <div className="relative">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-black/5 text-xs font-semibold text-gray-800 mb-3">
+                  <i data-lucide="sparkles" className="w-4 h-4 animate-spin-slow"></i>
+                  <span>Twoje pudełko, Twoje zasady</span>
+                </div>
+
+                <h2 className="text-lg md:text-xl font-extrabold text-gray-900">
+                  Zamów jak z aplikacji
+                </h2>
+                <p className="mt-1 text-sm text-gray-800/80">
+                  Dodaj eatmi.pl do ekranu głównego i wracaj do ulubionych boxów w kilka sekund.
+                </p>
+
+                <div className="mt-4 grid grid-cols-3 gap-3 text-center text-xs">
+                  <div className="bg-white/80 rounded-xl px-3 py-2 shadow-soft">
+                    <div className="font-extrabold text-sm">2k+</div>
+                    <div className="text-gray-500">zamówień</div>
+                  </div>
+                  <div className="bg-white/80 rounded-xl px-3 py-2 shadow-soft">
+                    <div className="font-extrabold text-sm">4.9★</div>
+                    <div className="text-gray-500">ocena</div>
+                  </div>
+                  <div className="bg-white/80 rounded-xl px-3 py-2 shadow-soft animate-pulse">
+                    <div className="font-extrabold text-sm">15 min</div>
+                    <div className="text-gray-500">do złożenia</div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
+          {/* KONIEC PRAWEJ KOLUMNY */}
         </div>
       </section>
     );
@@ -436,131 +501,353 @@
       </div>
     );
 
-    // --- Karta kategorii na stronie głównej ---
-    const CategoryCard = ({ category }) => {
-      const handleClick = () => {
-        window.location.hash = `#/kategoria/${category.id}`;
-      };
+    const BoxCard = ({id, name, limits, price}) => (
+      <a href={`#/box/${id}`} className="group block bg-white border border-gray-200 rounded-2xl p-6 hover:shadow-soft transition">
+        <div className="flex items-center justify-between">
+          <h3 className="font-bold text-lg">{name}</h3>
+          <span className="text-gray-900 font-extrabold">{currency(price)}</span>
+        </div>
+        <ul className="mt-3 text-sm text-gray-600 space-y-1">
+          {Object.entries(limits).filter(([,v])=>v>0).map(([k,v])=> (
+            <li key={k} className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full" style={{background: getCatColor(k)}}></span>
+              {CATEGORIES.find(c=>c.id===k)?.name}: <b className="ml-1">{v}×</b>
+            </li>
+          ))}
+        </ul>
+        <div className="mt-4 inline-flex items-center gap-2 text-gray-700 group-hover:gap-3 transition">
+          Wybierz <i data-lucide="arrow-right" className="w-4 h-4"></i>
+        </div>
+      </a>
+    );
+
+    // >>> Karty oferty śniadaniowej
+    const BreakfastBoxCard = ({ box, onAdd }) => {
       return (
-        <button
-          type="button"
-          onClick={handleClick}
-          className="group bg-white border border-gray-200 rounded-2xl p-5 text-left shadow-soft hover:shadow-md hover:-translate-y-1 transition w-full"
-        >
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <div className="inline-flex items-center gap-2 text-xs uppercase tracking-widest text-gray-500">
-                <span className="w-2 h-2 rounded-full bg-brand-yellow"></span>
-                Kategoria
-              </div>
-              <h3 className="mt-1 text-lg font-extrabold">{category.name}</h3>
-            </div>
-            <div className="w-10 h-10 rounded-xl bg-brand-yellow/20 grid place-items-center">
-              <i data-lucide={category.icon} className="w-5 h-5 text-gray-900"></i>
-            </div>
+        <div className="bg-white border border-gray-200 rounded-2xl p-5 flex flex-col">
+          <div className="flex items-center justify-between">
+            <h3 className="font-bold text-lg">{box.name}</h3>
+            <span className="font-extrabold">{currency(box.price)}</span>
           </div>
-          <p className="mt-3 text-sm text-gray-600">
-            {category.description}
+          <p className="mt-1 text-xs text-gray-500">
+            Każdy box w wersji klasycznej lub vege.
           </p>
-          <div className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-gray-900 group-hover:gap-3 transition">
-            Otwórz kategorię
-            <i data-lucide="arrow-right" className="w-4 h-4"></i>
+
+          <div className="mt-4 grid grid-cols-1 gap-4">
+            {box.variants.map(variant => (
+              <div
+                key={variant.id}
+                className="border border-gray-200 rounded-xl p-3"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="text-sm font-semibold">{variant.label}</div>
+                  {variant.label.toLowerCase().includes('vege') && (
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100">
+                      vege
+                    </span>
+                  )}
+                </div>
+                <div className="mt-2 flex flex-wrap gap-2 text-xs text-gray-600">
+                  {variant.items.map(it => (
+                    <span
+                      key={it.id}
+                      className="px-2 py-1 rounded-full border border-gray-200"
+                    >
+                      {it.name}
+                    </span>
+                  ))}
+                </div>
+                <button
+                  onClick={() => onAdd(variant)}
+                  className="mt-3 inline-flex items-center justify-center gap-2 bg-brand-yellow text-gray-900 font-semibold px-4 py-2 rounded-xl hover:scale-[1.02] transition"
+                >
+                  <i data-lucide="plus" className="w-4 h-4"></i>
+                  Dodaj {variant.label.toLowerCase()} do koszyka
+                </button>
+              </div>
+            ))}
           </div>
-        </button>
+        </div>
       );
     };
 
-    // --- Widok kategorii (lista pozycji jak w kiosku) ---
-    const CategoryPage = ({ categoryId }) => {
+    // >>> Karty oferty lunchowej
+    const LunchBoxCard = ({box, onAdd}) => {
+      const cover = box.items?.[0]?.img;
+      return (
+        <div className="bg-white border border-gray-200 rounded-2xl p-5 flex flex-col">
+          {cover && (
+            <img
+              src={cover}
+              alt={box.name}
+              loading="lazy"
+              className="w-full h-36 object-cover rounded-xl mb-3"
+            />
+          )}
+          <div className="flex items-center justify-between">
+            <h3 className="font-bold text-lg">{box.name}</h3>
+            <span className="font-extrabold">{currency(box.price)}</span>
+          </div>
+          <div className="mt-3 flex flex-wrap gap-2 text-xs text-gray-600">
+            {box.items.map((it)=> (
+              <span key={it.id||it.name} className="px-2 py-1 rounded-full border border-gray-200">
+                {it.name}
+              </span>
+            ))}
+          </div>
+          <button
+            onClick={onAdd}
+            className="mt-4 inline-flex items-center justify-center gap-2 bg-brand-yellow text-gray-900 font-semibold px-4 py-2 rounded-xl hover:scale-[1.02] transition"
+          >
+            <i data-lucide="plus" className="w-4 h-4"></i> Dodaj do koszyka
+          </button>
+        </div>
+      );
+    };
+
+    // --- BoxBuilder ---
+    const BoxBuilder = ({boxId}) => {
+      const rules = BOX_RULES[boxId];
+      const orderCats = CATEGORIES.filter(c => rules.limits[c.id] > 0).map(c => c.id);
+      const [selected, setSelected] = useState({ slone:[], slodkie:[], zdrowe:[], napoj:[] });
       const { add } = useCart();
-      const category = PRODUCT_CATEGORIES.find(c => c.id === categoryId);
-      const items = PRODUCTS[categoryId] || [];
 
-      if (!category) {
-        return (
-          <section className="py-10">
-            <div className="max-w-6xl mx-auto px-4">
-              <a href="#/" className="inline-flex items-center gap-2 text-sm text-gray-600">
-                <i data-lucide="arrow-left" className="w-4 h-4"></i> Wróć
-              </a>
-              <h2 className="text-2xl font-extrabold mt-3">Kategoria nie istnieje</h2>
-              <p className="mt-2 text-gray-600">Wróć do menu i wybierz jedną z dostępnych kategorii.</p>
-            </div>
-          </section>
-        );
-      }
+      // Podgląd zdjęcia (modal)
+      const [preview, setPreview] = useState({ open:false, src:'', alt:'' });
+      const openPreview  = (src, alt) => setPreview({ open:true, src, alt });
+      const closePreview = () => setPreview({ open:false, src:'', alt:'' });
 
-      const handleAdd = (item) => {
-        add({
-          type: 'product',
-          name: item.name,
-          price: item.price,
-        });
+      // Modal info o przeciąganiu
+      const [hintOpen, setHintOpen] = useState(() => {
+        try { return !JSON.parse(localStorage.getItem('eatmi-dnd-hint-dismissed')||'false'); } catch { return true; }
+      });
+      const closeHint = () => { setHintOpen(false); try { localStorage.setItem('eatmi-dnd-hint-dismissed', 'true'); } catch {} };
+
+      // Aktywna kategoria
+      const currentCatId = useMemo(() => {
+        for (const id of orderCats) {
+          const lim = rules.limits[id] || 0;
+          if ((selected[id]?.length || 0) < lim) return id;
+        }
+        return null;
+      }, [orderCats, rules.limits, selected]);
+
+      const removeItem = (cat, id) => setSelected(prev => ({...prev, [cat]: prev[cat].filter(i=> i.id!==id)}));
+
+      const onDrop = (e) => {
+        e.preventDefault();
+        try {
+          const data = JSON.parse(e.dataTransfer.getData('text/plain'));
+          if(!data || !data.category || !data.item) return;
+
+          if (currentCatId && data.category !== currentCatId) return;
+
+          const cat = data.category;
+          const limit = rules.limits[cat] || 0;
+          if (selected[cat].some(i => i.id === data.item.id)) return;
+          if (selected[cat].length >= limit) return;
+          setSelected(prev => ({...prev, [cat]: [...prev[cat], data.item]}));
+        } catch(err) {}
+      };
+
+      const onDragOver = (e) => { e.preventDefault(); e.currentTarget.classList.add('drag-hover'); };
+      const onDragLeave = (e) => { e.currentTarget.classList.remove('drag-hover'); };
+      const onDropEnd   = (e) => { e.currentTarget.classList.remove('drag-hover'); onDrop(e); };
+
+      const canAddToCart = orderCats.every(id => (selected[id]?.length || 0) === (rules.limits[id] || 0));
+      const handleAdd = () => {
+        add({ type:'custom-box', name: rules.name, price: rules.price, items: Object.values(selected).flat() });
+        window.location.hash = '#/koszyk';
       };
 
       return (
         <section className="py-10">
           <div className="max-w-6xl mx-auto px-4">
             <a href="#/" className="inline-flex items-center gap-2 text-sm text-gray-600">
-              <i data-lucide="arrow-left" className="w-4 h-4"></i> Wróć do menu
+              <i data-lucide="arrow-left" className="w-4 h-4"></i> Wróć
             </a>
 
-            <div className="mt-4 flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-brand-yellow/20 grid place-items-center">
-                <i data-lucide={category.icon} className="w-5 h-5 text-gray-900"></i>
+            <div className="mt-4 bg-white border border-gray-200 rounded-2xl p-5 shadow-soft">
+              <div className="flex items-center justify-between">
+                <h2 className="font-extrabold text-xl">{rules.name}</h2>
+                <div className="text-gray-900 font-extrabold">{currency(rules.price)}</div>
               </div>
-              <div>
-                <h2 className="text-2xl md:text-3xl font-extrabold">{category.name}</h2>
-                <p className="text-sm text-gray-600 mt-1">
-                  Wybierz pozycje z tej kategorii i dodaj do koszyka. Możesz wybrać kilka różnych boxów i produktów naraz.
-                </p>
+              <p className="text-gray-600 text-sm mt-1">
+                {currentCatId ? (
+                  <>
+                    Krok {orderCats.indexOf(currentCatId)+1}/{orderCats.length}: wybierz pozycje z kategorii{' '}
+                    <b>{CATEGORIES.find(c=>c.id===currentCatId)?.name}</b> i przeciągnij do boxa.
+                  </>
+                ) : (
+                  <>Wszystkie kategorie uzupełnione. Twój box jest gotowy do dodania do koszyka.</>
+                )}
+              </p>
+
+              <div
+                onDragOver={onDragOver}
+                onDragLeave={onDragLeave}
+                onDrop={onDropEnd}
+                className="mt-4 rounded-2xl border-2 border-dashed border-gray-200 p-4 grid grid-cols-2 md:grid-cols-4 gap-3"
+              >
+                {orderCats.map(catId => (
+                  <div key={catId} className="bg-gray-50 rounded-xl p-3 border border-gray-200">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="font-semibold">
+                        {CATEGORIES.find(c=>c.id===catId)?.name}
+                      </span>
+                      <span className="text-gray-500">
+                        {selected[catId].length}/{rules.limits[catId]}
+                      </span>
+                    </div>
+                    <div className="mt-2 flex flex-col gap-2">
+                      {selected[catId].map(it => (
+                        <div
+                          key={it.id}
+                          className="w-full text-left text-sm bg-white border border-gray-200 rounded-lg p-2 flex items-center justify-between gap-2"
+                        >
+                          <span className="truncate">{it.name}</span>
+                          <button
+                            onClick={() => removeItem(catId, it.id)}
+                            className="shrink-0 w-6 h-6 grid place-items-center rounded-md bg-red-500 text-white"
+                            aria-label={`Usuń ${it.name}`}
+                            title="Usuń"
+                          >
+                            <span className="text-lg leading-none">−</span>
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
               </div>
+
+              {canAddToCart && (
+                <div className="mt-3 flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-xl p-3 text-sm text-amber-900">
+                  <span className="text-lg">✨</span>
+                  <div>
+                    <div className="font-semibold">Twój box jest gotowy!</div>
+                    <p>
+                      Zanim przejdziesz dalej, możesz dorzucić jeszcze jeden box albo później w koszyku kliknąć dodatki
+                      (brownie, lemoniada itp.), aby powiększyć zamówienie jednym kliknięciem.
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              <button
+                disabled={!canAddToCart}
+                onClick={handleAdd}
+                className={`mt-4 w-full inline-flex items-center justify-center gap-2 rounded-xl px-4 py-3 font-semibold ${
+                  canAddToCart ? 'bg-brand-yellow text-gray-900' : 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                }`}
+              >
+                <i data-lucide="check-circle" className="w-5 h-5"></i>
+                Dodaj box do koszyka
+              </button>
             </div>
 
-            <div className="mt-6 grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
-              {items.map(item => (
-                <div
-                  key={item.id}
-                  className="bg-white border border-gray-200 rounded-2xl p-5 flex flex-col justify-between shadow-soft hover:shadow-md hover:-translate-y-0.5 transition"
-                >
-                  <div>
-                    <h3 className="text-base font-extrabold text-gray-900">
-                      {item.name}
-                    </h3>
-                    {item.subtitle && (
-                      <p className="mt-1 text-sm text-gray-600">
-                        {item.subtitle}
-                      </p>
-                    )}
-                  </div>
-                  <div className="mt-4 flex items-center justify-between gap-3">
-                    <div className="text-lg font-extrabold">
-                      {currency(item.price)}
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => handleAdd(item)}
-                      className="inline-flex items-center justify-center gap-2 bg-brand-yellow text-gray-900 font-semibold px-4 py-2 rounded-xl hover:scale-[1.02] transition"
+            <div className="mt-6">
+              {currentCatId ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                  <div className="bg-white border border-gray-200 rounded-2xl shadow-soft overflow-hidden">
+                    <div
+                      className="px-5 py-3 font-semibold text-white"
+                      style={{background: getCatColor(currentCatId)}}
                     >
-                      <i data-lucide="plus" className="w-4 h-4"></i>
-                      Dodaj
+                      {CATEGORIES.find(c=>c.id===currentCatId)?.name}
+                    </div>
+                    <div className="p-4 space-y-3">
+                      {MENU[currentCatId].map(item => (
+                        <div
+                          key={item.id}
+                          draggable
+                          onDragStart={(e)=> e.dataTransfer.setData('text/plain', JSON.stringify({category: currentCatId, item}))}
+                          className="group bg-white border border-gray-200 rounded-xl px-3 py-2 hover:shadow-soft transition cursor-grab"
+                        >
+                          <div className="flex items-center gap-3">
+                            <button
+                              type="button"
+                              onClick={(ev)=>{ ev.preventDefault(); ev.stopPropagation(); openPreview(item.img, item.name); }}
+                              className="shrink-0 rounded-lg overflow-hidden border border-gray-200 focus:outline-none focus:ring-2 focus:ring-brand-yellow"
+                              title="Powiększ zdjęcie"
+                              aria-label={`Powiększ zdjęcie: ${item.name}`}
+                            >
+                              <img
+                                src={item.img}
+                                alt={item.name}
+                                loading="lazy"
+                                draggable="false"
+                                className="w-10 h-10 object-cover"
+                              />
+                            </button>
+                            <div className="min-w-0">
+                              <div className="font-semibold text-sm leading-tight">{item.name}</div>
+                              <div className="text-xs text-gray-600 truncate">{item.desc}</div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-sm text-gray-600">
+                  Wszystkie wymagane kategorie zostały wybrane. Możesz dodać box do koszyka powyżej.
+                </div>
+              )}
+            </div>
+
+            {preview.open && (
+              <div className="fixed inset-0 z-[60] bg-black/70 flex items-center justify-center p-4" onClick={closePreview}>
+                <div className="relative bg-white rounded-2xl shadow-glass max-w-3xl w-full" onClick={(e)=>e.stopPropagation()}>
+                  <button
+                    onClick={closePreview}
+                    className="absolute top-2 right-2 p-2 rounded-full bg-white/90 border border-gray-200 shadow-soft"
+                    aria-label="Zamknij podgląd"
+                  >
+                    <i data-lucide="x" className="w-4 h-4"></i>
+                  </button>
+                  <img src={preview.src} alt={preview.alt} className="w-full h-auto rounded-2xl" />
+                </div>
+              </div>
+            )}
+
+            {hintOpen && (
+              <div className="fixed inset-0 z-[70] bg-black/60 flex items-center justify-center p-4" role="dialog" aria-modal="true">
+                <div className="relative w-full max-w-lg bg-white rounded-2xl shadow-glass border border-gray-200 p-5">
+                  <button
+                    onClick={closeHint}
+                    className="absolute top-3 right-3 p-2 rounded-full bg-white border border-gray-200 shadow-soft hover:bg-gray-50"
+                    aria-label="Zamknij okno"
+                    title="Zamknij"
+                  >
+                    <i data-lucide="x" className="w-4 h-4"></i>
+                  </button>
+                  <div className="flex items-start gap-3">
+                    <div className="shrink-0 w-10 h-10 rounded-xl grid place-items-center bg-brand-yellow">
+                      <i data-lucide="hand" className="w-5 h-5"></i>
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-extrabold">Jak dodać produkt do boxa?</h3>
+                      <p className="mt-1 text-gray-700">
+                        Przeciągaj pozycje z aktywnej kategorii do strefy boxa. Po uzupełnieniu limitu kategoria znika i pojawia się następna.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="mt-4 flex justify-end">
+                    <button onClick={closeHint} className="px-4 py-2 rounded-xl bg-gray-900 text-white font-semibold">
+                      Rozumiem
                     </button>
                   </div>
                 </div>
-              ))}
-            </div>
+              </div>
+            )}
           </div>
         </section>
       );
-    };
+    }
 
-    // >>> Koszyk + dodatki (zostawione, ale bez powiązania z kreatorem)
-    const EXTRA_ITEMS = [
-      { id:'extra-brownie',  name:'Brownie do kawy',       price: 9 },
-      { id:'extra-lemoniada',name:'Domowa lemoniada 0,4l', price: 12 },
-      { id:'extra-cookie',   name:'Cookie czekoladowe',    price: 7 },
-    ];
-
+    // >>> Koszyk + dodatki (NAPRAWIONY RESPONSYWNY UKŁAD)
     const Koszyk = () => {
       const { cart, remove, clear, total, incQty, decQty, setQty, lineTotal, add } = useCart();
       const goToCheckout = () => window.location.hash = '#/zamowienie';
@@ -584,6 +871,15 @@
                       >
                         <div className="min-w-0 flex-1">
                           <div className="font-bold break-words">{item.name}</div>
+                          {item.items && (
+                            <div className="mt-1 text-sm text-gray-600 flex flex-wrap gap-2">
+                              {item.items.map((i)=> (
+                                <span key={i.id||i.name} className="px-2 py-1 rounded-full border border-gray-200">
+                                  {i.name}
+                                </span>
+                              ))}
+                            </div>
+                          )}
                         </div>
 
                         <div className="flex flex-col sm:flex-row md:flex-row gap-3 md:gap-4 items-stretch md:items-center w-full md:w-auto justify-between md:justify-end">
@@ -825,6 +1121,18 @@
                         </span>
                         <span className="font-bold">{currency(lineTotal(i))}</span>
                       </div>
+                      {i.items && (
+                        <div className="text-gray-600 flex flex-wrap gap-1 mt-1">
+                          {i.items.map(x => (
+                            <span
+                              key={x.id||x.name}
+                              className="px-1.5 py-0.5 border border-gray-200 rounded-lg"
+                            >
+                              {x.name}
+                            </span>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -845,6 +1153,35 @@
       );
     }
 
+    // --- Router ---
+    const Router = () => {
+      const [route, setRoute] = useState(window.location.hash || '#/');
+      useEffect(()=>{
+        const onHash = () => setRoute(window.location.hash || '#/');
+        window.addEventListener('hashchange', onHash);
+        return ()=> window.removeEventListener('hashchange', onHash);
+      },[]);
+      useEffect(()=> { lucide.createIcons(); }, [route]);
+
+      if(route.startsWith('#/box/')) {
+        const id = route.split('/')[2];
+        return <BoxBuilder boxId={id} />
+      }
+      if(route === '#/koszyk') return <Koszyk />
+      if(route === '#/zamowienie') return <Zamowienie />
+      return <Home />
+    }
+
+    function getCatColor(cat){
+      switch(cat){
+        case 'slone': return '#F59E0B';
+        case 'slodkie': return '#EC4899';
+        case 'zdrowe': return '#10B981';
+        case 'napoj': return '#3B82F6';
+        default: return '#6B7280';
+      }
+    }
+
     const Input = (props) => (
       <input
         {...props}
@@ -863,7 +1200,7 @@
 
     // --- Modal logowania / rejestracji ---
     const AuthModal = ({ open, onClose }) => {
-      const [mode, setMode] = useState('login');
+      const [mode, setMode] = useState('login'); // 'login' | 'register'
       const [form, setForm] = useState({
         email: '',
         password: '',
@@ -930,10 +1267,11 @@
               </p>
             </div>
 
+            {/* Social logins: tylko Google i Apple */}
             <div className="flex flex-col gap-2 mb-4">
               <button
                 type="button"
-                className="btn flex w-full items-center justify-center gap-2 rounded-[10px] border border-[#ededef] bg:white px-3 py-2 text-sm font-medium hover:border-[#2d79f3] transition"
+                className="btn flex w-full items-center justify-center gap-2 rounded-[10px] border border-[#ededef] bg-white px-3 py-2 text-sm font-medium hover:border-[#2d79f3] transition"
               >
                 <span className="inline-flex h-5 w-5 items-center justify-center">
                   <svg
@@ -981,6 +1319,7 @@
               <div className="h-px flex-1 bg-gray-200" />
             </div>
 
+            {/* Formularz e-mail + hasło */}
             <form onSubmit={handleSubmit} className="space-y-3">
               <div>
                 <Label>Adres e-mail</Label>
@@ -1069,22 +1408,74 @@
       );
     };
 
-    // --- Home (bez kreatora, tylko kategorie) ---
+    // --- Home ---
     const Home = () => {
+      const { add } = useCart();
       return (
         <>
           <Hero />
 
-          <section id="kategorie" className="py-12 md:py-20 bg-gradient-to-b from-white to-brand-light">
+          <section id="zapakuj" className="py-12 md:py-20 bg-gradient-to-b from-white to-brand-light">
             <div className="max-w-6xl mx-auto px-4">
               <SectionTitle
-                eyebrow="Menu"
-                title="Wybierz kategorię"
-                subtitle="Najpierw wybierz kategorię, potem dodawaj boxy i produkty do koszyka — w kilka kliknięć!"
+                eyebrow="Konfigurator"
+                title="Zapakuj swojego boxa"
+                subtitle="Wybierz rozmiar boxa (mały, średni, duży) i skomponuj idealny zestaw metodą przeciągnij-i-upuść."
               />
               <div className="mt-8 grid md:grid-cols-3 gap-6">
-                {PRODUCT_CATEGORIES.map(cat => (
-                  <CategoryCard key={cat.id} category={cat} />
+                {Object.entries(BOX_RULES).map(([id, def]) => (
+                  <BoxCard
+                    key={id}
+                    id={id}
+                    name={def.name}
+                    limits={def.limits}
+                    price={def.price}
+                  />
+                ))}
+              </div>
+            </div>
+          </section>
+
+          <section id="sniadanie" className="py-12 md:py-20">
+            <div className="max-w-6xl mx-auto px-4">
+              <SectionTitle
+                eyebrow="Oferta śniadaniowa"
+                title="Boxy śniadaniowe"
+                subtitle="Gotowe zestawy śniadaniowe w trzech rozmiarach — każdy w wersji klasycznej oraz vege."
+              />
+              <div className="mt-8 grid md:grid-cols-3 gap-6">
+                {BREAKFAST_BOXES.map(bx => (
+                  <BreakfastBoxCard
+                    key={bx.id}
+                    box={bx}
+                    onAdd={(variant) =>
+                      add({
+                        type: 'breakfast-box',
+                        name: `${bx.name} — ${variant.label}`,
+                        price: bx.price,
+                        items: variant.items,
+                      })
+                    }
+                  />
+                ))}
+              </div>
+            </div>
+          </section>
+
+          <section id="oferta" className="py-12 md:py-20">
+            <div className="max-w-6xl mx-auto px-4">
+              <SectionTitle
+                eyebrow="Oferta lunchowa"
+                title="Lunch boxy"
+                subtitle="Szybkie zestawy lunchowe — idealne na przerwę w pracy lub na wynos."
+              />
+              <div className="mt-8 grid md:grid-cols-3 gap-6">
+                {LUNCH_BOXES.map(rb => (
+                  <LunchBoxCard
+                    key={rb.id}
+                    box={rb}
+                    onAdd={()=> add({ type:'lunch-box', name: rb.name, price: rb.price, items: rb.items })}
+                  />
                 ))}
               </div>
             </div>
@@ -1154,20 +1545,20 @@
       <nav className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 w-[min(720px,92%)] liquid border border-white/50 rounded-2xl shadow-glass">
         <ul className="grid grid-cols-4">
           <li>
-            <a href="#kategorie" className="flex flex-col items-center py-3 text-sm font-medium">
+            <a href="#zapakuj" className="flex flex-col items-center py-3 text-sm font-medium">
               <i data-lucide="shopping-bag" className="w-5 h-5"></i>
-              Menu
+              Zamów
             </a>
           </li>
           <li>
-            <a href="#/kategoria/boxy-sniadaniowe" className="flex flex-col items-center py-3 text-sm font-medium">
-              <i data-lucide="package-open" className="w-5 h-5"></i>
+            <a href="#sniadanie" className="flex flex-col items-center py-3 text-sm font-medium">
+              <i data-lucide="sunrise" className="w-5 h-5"></i>
               Śniadania
             </a>
           </li>
           <li>
-            <a href="#/kategoria/boxy-lunchowe" className="flex flex-col items-center py-3 text-sm font-medium">
-              <i data-lucide="utensils-crossed" className="w-5 h-5"></i>
+            <a href="#oferta" className="flex flex-col items-center py-3 text-sm font-medium">
+              <i data-lucide="app-window" className="w-5 h-5"></i>
               Lunch
             </a>
           </li>
@@ -1181,6 +1572,7 @@
       </nav>
     );
 
+    // --- Helper: wykrywanie urządzeń mobilnych ---
     const isMobileDevice = () => {
       if (typeof navigator === 'undefined') return false;
       const ua = navigator.userAgent || '';
@@ -1213,6 +1605,7 @@
       return { type: 'other', browser: 'other' };
     };
 
+    // --- Modal: Dodaj do ekranu głównego ---
     const AddToHomePrompt = ({ open, onClose, platform }) => {
       if (!open) return null;
 
@@ -1220,6 +1613,7 @@
       const isAndroid = platform?.type === 'android';
 
       const handleAddNow = () => {
+        // delikatnie przewiń do góry, żeby użytkownik widział pasek adresu / menu przeglądarki
         try {
           window.scrollTo({ top: 0, behavior: 'smooth' });
         } catch {}
@@ -1322,34 +1716,17 @@
       );
     };
 
-    // --- Router ---
-    const Router = () => {
-      const [route, setRoute] = useState(window.location.hash || '#/');
-      useEffect(()=>{
-        const onHash = () => setRoute(window.location.hash || '#/');
-        window.addEventListener('hashchange', onHash);
-        return ()=> window.removeEventListener('hashchange', onHash);
-      },[]);
-      useEffect(()=> { lucide.createIcons(); }, [route]);
-
-      if (route.startsWith('#/kategoria/')) {
-        const id = route.split('/')[2];
-        return <CategoryPage categoryId={id} />;
-      }
-      if(route === '#/koszyk') return <Koszyk />
-      if(route === '#/zamowienie') return <Zamowienie />
-      return <Home />
-    }
-
     const App = () => {
       const [authOpen, setAuthOpen] = useState(false);
       const [a2hsOpen, setA2hsOpen] = useState(false);
       const [platform, setPlatform] = useState({ type: 'other', browser: 'other' });
 
       useEffect(() => {
+        // odśwież ikony, gdy otwieramy / zamykamy modal konta
         lucide.createIcons();
       }, [authOpen]);
 
+      // Obsługa prompta "Dodaj do ekranu głównego" tylko na mobile / tabletach
       useEffect(() => {
         if (!isMobileDevice()) return;
         try {
@@ -1360,6 +1737,7 @@
         const detected = detectPlatform();
         setPlatform(detected);
 
+        // małe opóźnienie, żeby nie wyskakiwało dokładnie w tej samej chwili co ładowanie strony
         const t = setTimeout(() => {
           setA2hsOpen(true);
         }, 2500);
