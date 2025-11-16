@@ -383,6 +383,7 @@
       </header>
     );
 
+    // --- HERO BEZ ZDJĘCIA, Z "FAJNYM ELEMENTEM" PO PRAWEJ ---
     const Hero = () => (
       <section className="relative overflow-hidden">
         <div className="max-w-6xl mx-auto px-4 py-12 md:py-20 grid md:grid-cols-2 gap-10 items-center">
@@ -399,7 +400,7 @@
               <span className="text-brand-yellow">zamów online</span>
             </h1>
             <p className="mt-4 text-gray-600 max-w-prose">
-              Boxy śniadaniowe i lunchowe, kanapki, sałatki, desery i napoje. 
+              Boxy śniadaniowe i lunchowe, kanapki, sałatki, desery i napoje.
               Jak w kiosku w restauracji — wybierasz kategorię, klikasz pozycje i finalizujesz zamówienie.
             </p>
             <div className="mt-6 flex flex-wrap gap-3">
@@ -413,74 +414,110 @@
               </a>
             </div>
           </div>
+
+          {/* NOWY ELEMENT PO PRAWEJ ZAMIAST ZDJĘCIA */}
           <div className="relative">
-            <div className="absolute -top-10 -right-10 w-56 h-56 rounded-full bg-gradient-to-tr from-brand-yellow/60 via-brand-yellow/10 to-transparent blur-3xl opacity-80 pointer-events-none" />
-
-            <div className="relative space-y-4">
-              <div className="bg-white/90 border border-gray-200 rounded-2xl p-5 shadow-glass backdrop-blur">
-                <div className="flex items-center justify-between gap-3 mb-3">
-                  <div>
-                    <div className="text-[11px] uppercase tracking-[0.18em] text-gray-500 font-semibold">
-                      Jak to działa
-                    </div>
-                    <h2 className="text-lg font-extrabold text-gray-900">
-                      Lunch w 3 prostych krokach
-                    </h2>
-                  </div>
-                  <div className="w-10 h-10 rounded-xl bg-brand-yellow/20 grid place-items-center">
-                    <i data-lucide="sparkles" className="w-5 h-5 text-gray-900"></i>
-                  </div>
+            <div className="grid gap-4">
+              {/* Pasek kroków */}
+              <div className="bg-white rounded-2xl shadow-soft border border-gray-200 p-4">
+                <div className="text-xs uppercase tracking-[0.16em] text-gray-500 font-semibold mb-2">
+                  Jak to działa?
                 </div>
-
-                <ol className="space-y-2 text-sm text-gray-700">
-                  <li className="flex gap-3">
-                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-gray-900 text-[11px] font-bold text-white">
+                <ol className="space-y-2 text-sm">
+                  <li className="flex gap-3 items-start">
+                    <span className="w-6 h-6 rounded-full bg-brand-yellow text-gray-900 text-xs font-bold flex items-center justify-center mt-0.5">
                       1
                     </span>
-                    <span>Wybierz kategorię — boxy, kanapki, sałatki albo desery.</span>
+                    <div>
+                      <div className="font-semibold">Wybierz kategorię</div>
+                      <div className="text-gray-500">Boxy śniadaniowe, lunchowe, kanapki, sałatki, desery i napoje.</div>
+                    </div>
                   </li>
-                  <li className="flex gap-3">
-                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-gray-900 text-[11px] font-bold text-white">
+                  <li className="flex gap-3 items-start">
+                    <span className="w-6 h-6 rounded-full bg-gray-900 text-white text-xs font-bold flex items-center justify-center mt-0.5">
                       2
                     </span>
-                    <span>Dodaj do koszyka tyle pozycji, ile potrzebujesz.</span>
+                    <div>
+                      <div className="font-semibold">Dodaj do koszyka</div>
+                      <div className="text-gray-500">Kilka klików — jak przy zamawianiu w kiosku w restauracji.</div>
+                    </div>
                   </li>
-                  <li className="flex gap-3">
-                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-gray-900 text-[11px] font-bold text-white">
+                  <li className="flex gap-3 items-start">
+                    <span className="w-6 h-6 rounded-full bg-gray-100 text-gray-900 text-xs font-bold flex items-center justify-center mt-0.5">
                       3
                     </span>
-                    <span>Podaj adres, opłać online i czekaj na dostawę. 🍽️</span>
+                    <div>
+                      <div className="font-semibold">Potwierdź i czekaj na dostawę</div>
+                      <div className="text-gray-500">My zajmujemy się resztą — świeże boxy na czas.</div>
+                    </div>
                   </li>
                 </ol>
               </div>
 
-              <div className="flex flex-wrap gap-3">
-                <div className="flex-1 min-w-[150px] bg-white border border-gray-200 rounded-2xl p-4 shadow-soft">
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-[11px] uppercase tracking-[0.18em] text-gray-500 font-semibold">
-                      Zadowoleni klienci
-                    </span>
-                    <i data-lucide="smile" className="w-4 h-4 text-brand-yellow"></i>
+              {/* Mini "live" karta zamówień */}
+              <div className="bg-white rounded-2xl shadow-soft border border-gray-200 p-4 flex flex-col gap-3">
+                <div className="flex items-center justify-between">
+                  <div className="text-xs uppercase tracking-[0.16em] text-gray-500 font-semibold">
+                    Dziś popularne
                   </div>
-                  <div className="text-2xl font-extrabold">4.9/5</div>
-                  <p className="text-xs text-gray-500 mt-1">
-                    Na podstawie ponad 2&nbsp;000 zamówień.
-                  </p>
+                  <div className="inline-flex items-center gap-1 text-xs text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                    <span>W realnym czasie</span>
+                  </div>
                 </div>
 
-                <div className="flex-1 min-w-[150px] bg-gray-900 text-white rounded-2xl p-4 shadow-glass">
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-[11px] uppercase tracking-[0.18em] text-gray-400 font-semibold">
-                      Dzisiejszy tip
+                <div className="space-y-2 text-sm">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="w-7 h-7 rounded-lg bg-brand-yellow/20 flex items-center justify-center">
+                        <i data-lucide="sun" className="w-4 h-4"></i>
+                      </span>
+                      <div>
+                        <div className="font-semibold leading-tight">Box śniadaniowy Klasyk — średni</div>
+                        <div className="text-[11px] text-gray-500">Właśnie zamówione na Woli</div>
+                      </div>
+                    </div>
+                    <span className="text-xs bg-gray-900 text-white rounded-full px-2 py-1">
+                      TOP 1
                     </span>
-                    <i data-lucide="clock" className="w-4 h-4 text-brand-yellow"></i>
                   </div>
-                  <p className="text-sm font-medium">
-                    Zamów do <span className="font-bold">10:30</span>, a śniadanie
-                    lub lunch przyjedzie prosto do biura. 🚚
-                  </p>
+
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="w-7 h-7 rounded-lg bg-brand-yellow/20 flex items-center justify-center">
+                        <i data-lucide="utensils-crossed" className="w-4 h-4"></i>
+                      </span>
+                      <div>
+                        <div className="font-semibold leading-tight">Box lunchowy Fit — duży</div>
+                        <div className="text-[11px] text-gray-500">Popularny w godzinach 11:00–13:00</div>
+                      </div>
+                    </div>
+                    <span className="text-xs text-gray-600">
+                      ⭐ 4.9
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="w-7 h-7 rounded-lg bg-brand-yellow/20 flex items-center justify-center">
+                        <i data-lucide="sandwich" className="w-4 h-4"></i>
+                      </span>
+                      <div>
+                        <div className="font-semibold leading-tight">Kanapka z awokado i jajkiem</div>
+                        <div className="text-[11px] text-gray-500">Idealna na szybkie śniadanie</div>
+                      </div>
+                    </div>
+                    <span className="text-xs text-gray-600">
+                      ⏱️ ~15 min
+                    </span>
+                  </div>
                 </div>
               </div>
+            </div>
+
+            <div className="absolute -bottom-4 -right-4 bg-gray-900 text-white rounded-xl2 px-4 py-3 shadow-glass border border-gray-800 text-sm flex items-center gap-2">
+              <span className="text-base">⚡</span>
+              <span>Średni czas przygotowania <b>~20 min</b></span>
             </div>
           </div>
         </div>
@@ -1013,7 +1050,7 @@
 
               <button
                 type="button"
-                className="btn flex w-full items-center justify-center gap-2 rounded-[10px] border border-[#ededef] bg:white px-3 py-2 text-sm font-medium hover:border-[#2d79f3] transition"
+                className="btn flex w-full items-center justify-center gap-2 rounded-[10px] border border-[#ededef] bg-white px-3 py-2 text-sm font-medium hover:border-[#2d79f3] transition"
               >
                 <span className="inline-flex h-5 w-5 items-center justify-center">
                   <svg
