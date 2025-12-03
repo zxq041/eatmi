@@ -1,20 +1,17 @@
 /**
- * server.js — eatmi.pl backend + PayU (ESM)
+ * server.js — eatmi.pl backend + PayU (ESM, bez axios)
  * -------------------------------------------------
  * DZIAŁA przy "type": "module" w package.json
  *
  * WYMAGANE:
- *   npm i express axios cors
+ *   npm i express cors
  *
- * OPCJONALNIE:
- *   npm i dotenv
- *   i plik .env z danymi PayU
+ * Node >=18 ma wbudowane fetch.
  */
 
 import path from "path";
 import fs from "fs";
 import express from "express";
-import axios from "axios";
 import cors from "cors";
 import crypto from "crypto";
 import { fileURLToPath } from "url";
@@ -43,7 +40,7 @@ const PAYU_MD5 = process.env.PAYU_MD5 || "580033922fa44e698f99ccb91b225d3b";
 // OAuth
 const PAYU_CLIENT_ID = process.env.PAYU_CLIENT_ID || "4415769";
 const PAYU_CLIENT_SECRET =
-  process.env.PAYU_CLIENT_SECRET || "835a154e9fc454e935ad6bb73dafd66c"; 
+  process.env.PAYU_CLIENT_SECRET || "835a154e9fc454e935ad6bb73dafd66c";
 //  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 //  TU WSTAWIASZ CLIENT SECRET (najlepiej w .env)
 
@@ -81,11 +78,19 @@ async function getPayuToken() {
   params.append("client_id", PAYU_CLIENT_ID);
   params.append("client_secret", PAYU_CLIENT_SECRET);
 
-  const res = await axios.post(tokenUrl, params, {
+  const r = await fetch(tokenUrl, {
+    method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: params.toString(),
   });
 
-  return res.data.access_token;
+  if (!r.ok) {
+    const errText = await r.text();
+    throw new Error("PayU token error: " + errText);
+  }
+
+  const data = await r.json();
+  return data.access_token;
 }
 
 function makeSignature(body) {
@@ -108,7 +113,6 @@ app.post("/api/payu/order", async (req, res) => {
     }
 
     const token = await getPayuToken();
-
     const localOrderId = "EATMI-" + Date.now();
 
     const orderBody = {
@@ -149,21 +153,27 @@ app.post("/api/payu/order", async (req, res) => {
 
     const sig = makeSignature(orderBody);
 
-    const createRes = await axios.post(
-      `${PAYU_BASE}/api/v2_1/orders`,
-      orderBody,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-          "OpenPayu-Signature": sig,
-        },
-      }
-    );
+    const createRes = await fetch(`${PAYU_BASE}/api/v2_1/orders`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+        "OpenPayu-Signature": sig,
+      },
+      body: JSON.stringify(orderBody),
+    });
 
-    const redirectUri = createRes.data?.redirectUri;
-    const payuOrderId = createRes.data?.orderId;
+    const createText = await createRes.text();
+    if (!createRes.ok) {
+      throw new Error("PayU create order error: " + createText);
+    }
 
+    const createData = JSON.parse(createText);
+
+    const redirectUri = createData?.redirectUri;
+    const payuOrderId = createData?.orderId;
+
+    // zapis do podglądu
     const orders = readOrders();
     orders.push({
       localOrderId,
@@ -178,8 +188,8 @@ app.post("/api/payu/order", async (req, res) => {
 
     return res.json({ redirectUri, localOrderId, payuOrderId });
   } catch (err) {
-    console.error("PAYU ERROR:", err?.response?.data || err.message);
-    return res.status(500).json({ error: "PayU create order failed." });
+    console.error("PAYU ERROR:", err.message);
+    return res.status(500).json({ error: err.message });
   }
 });
 
@@ -216,14 +226,6 @@ app.get("/api/orders", (req, res) => {
 });
 
 // ================== STATIC FRONT ==================
-/**
- * Struktura:
- *  - server.js
- *  - public/
- *      index.html
- *      manifest.webmanifest
- *      favicon.png
- */
 const PUBLIC_DIR = path.join(__dirname, "public");
 app.use(express.static(PUBLIC_DIR));
 
