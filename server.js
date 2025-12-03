@@ -226,16 +226,20 @@ app.get("/api/orders", (req, res) => {
 });
 
 // ================== STATIC FRONT ==================
-const PUBLIC_DIR = path.join(__dirname, "public");
+// index.html jest obok server.js, więc statyki serwujemy z root folderu:
+const PUBLIC_DIR = __dirname;
+
 app.use(express.static(PUBLIC_DIR));
 
-// SPA fallback
+// SPA fallback – zawsze index.html z tego samego folderu
 app.get("*", (req, res) => {
   res.sendFile(path.join(PUBLIC_DIR, "index.html"));
 });
+
 
 // ================== START ==================
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log("eatmi backend running on port", PORT);
 });
+
