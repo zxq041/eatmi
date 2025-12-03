@@ -1,24 +1,27 @@
 /**
- * server.js — eatmi.pl backend + PayU
+ * server.js — eatmi.pl backend + PayU (ESM)
  * -------------------------------------------------
- * 1) Serwuje statycznie front (index.html)
- * 2) Tworzy zamówienie PayU i przekierowuje klienta do płatności
- * 3) Odbiera webhook statusów PayU
+ * DZIAŁA przy "type": "module" w package.json
  *
  * WYMAGANE:
  *   npm i express axios cors
  *
- * OPCJONALNIE (zalecane):
+ * OPCJONALNIE:
  *   npm i dotenv
  *   i plik .env z danymi PayU
  */
 
-const path = require("path");
-const fs = require("fs");
-const express = require("express");
-const axios = require("axios");
-const cors = require("cors");
-const crypto = require("crypto");
+import path from "path";
+import fs from "fs";
+import express from "express";
+import axios from "axios";
+import cors from "cors";
+import crypto from "crypto";
+import { fileURLToPath } from "url";
+
+// żeby mieć __dirname w ESM:
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // ================== CONFIG APP ==================
 const app = express();
@@ -40,7 +43,9 @@ const PAYU_MD5 = process.env.PAYU_MD5 || "580033922fa44e698f99ccb91b225d3b";
 // OAuth
 const PAYU_CLIENT_ID = process.env.PAYU_CLIENT_ID || "4415769";
 const PAYU_CLIENT_SECRET =
-  process.env.PAYU_CLIENT_SECRET || "835a154e9fc454e935ad6bb73dafd66c"; // <<< TU CLIENT SECRET!
+  process.env.PAYU_CLIENT_SECRET || "835a154e9fc454e935ad6bb73dafd66c"; 
+//  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//  TU WSTAWIASZ CLIENT SECRET (najlepiej w .env)
 
 // PROD (PL/EU):
 const PAYU_BASE = "https://secure.payu.com";
@@ -48,11 +53,14 @@ const PAYU_BASE = "https://secure.payu.com";
 // const PAYU_BASE = "https://secure.snd.payu.com";
 
 // Twoje adresy (zmień na swoje prawdziwe domeny)
-const CONTINUE_URL = process.env.PAYU_CONTINUE_URL || "https://twojadomena.pl/#/success";
-const NOTIFY_URL = process.env.PAYU_NOTIFY_URL || "https://twojadomena.pl/api/payu/notify";
+const CONTINUE_URL =
+  process.env.PAYU_CONTINUE_URL || "https://twojadomena.pl/#/success";
+const NOTIFY_URL =
+  process.env.PAYU_NOTIFY_URL || "https://twojadomena.pl/api/payu/notify";
 
 // ================== SIMPLE ORDERS STORE ==================
 const ORDERS_FILE = path.join(__dirname, "orders.json");
+
 const readOrders = () => {
   try {
     return JSON.parse(fs.readFileSync(ORDERS_FILE, "utf8"));
@@ -60,6 +68,7 @@ const readOrders = () => {
     return [];
   }
 };
+
 const saveOrders = (orders) =>
   fs.writeFileSync(ORDERS_FILE, JSON.stringify(orders, null, 2));
 
@@ -98,10 +107,8 @@ app.post("/api/payu/order", async (req, res) => {
       return res.status(400).json({ error: "Brak koszyka lub kwoty." });
     }
 
-    // token OAuth
     const token = await getPayuToken();
 
-    // unikalny orderId po naszej stronie
     const localOrderId = "EATMI-" + Date.now();
 
     const orderBody = {
@@ -116,9 +123,7 @@ app.post("/api/payu/order", async (req, res) => {
       merchantPosId: PAYU_POS_ID,
       description: `Zamówienie eatmi.pl #${localOrderId}`,
       currencyCode: "PLN",
-
-      // w groszach
-      totalAmount: String(Math.round(total * 100)),
+      totalAmount: String(Math.round(total * 100)), // grosze
 
       buyer: {
         email: customer?.email || "klient@eatmi.pl",
@@ -126,8 +131,10 @@ app.post("/api/payu/order", async (req, res) => {
         firstName:
           (customer?.imieNazwisko || "").split(" ")[0] || "Klient",
         lastName:
-          (customer?.imieNazwisko || "").split(" ").slice(1).join(" ") ||
-          "Eatmi",
+          (customer?.imieNazwisko || "")
+            .split(" ")
+            .slice(1)
+            .join(" ") || "Eatmi",
         language: "pl",
       },
 
@@ -137,7 +144,6 @@ app.post("/api/payu/order", async (req, res) => {
         quantity: String(i.qty || 1),
       })),
 
-      // externalOrderId ułatwia powiązanie webhooków
       externalOrderId: localOrderId,
     };
 
@@ -158,7 +164,6 @@ app.post("/api/payu/order", async (req, res) => {
     const redirectUri = createRes.data?.redirectUri;
     const payuOrderId = createRes.data?.orderId;
 
-    // zapisz u siebie do podglądu
     const orders = readOrders();
     orders.push({
       localOrderId,
@@ -182,13 +187,11 @@ app.post("/api/payu/order", async (req, res) => {
 app.post("/api/payu/notify", (req, res) => {
   try {
     const data = req.body;
-
-    // PayU wysyła tablicę orders
     const order = data?.orders?.[0];
     if (!order) return res.sendStatus(200);
 
     const payuOrderId = order.orderId;
-    const status = order.status; // np. PENDING / COMPLETED / CANCELED
+    const status = order.status;
 
     const orders = readOrders();
     const idx = orders.findIndex((o) => o.payuOrderId === payuOrderId);
@@ -208,25 +211,23 @@ app.post("/api/payu/notify", (req, res) => {
 });
 
 // ================== OPTIONAL: PODGLĄD ZAMÓWIEŃ ==================
-// to tylko dla Ciebie, usuń jak nie chcesz
 app.get("/api/orders", (req, res) => {
   res.json(readOrders());
 });
 
 // ================== STATIC FRONT ==================
 /**
- * Zakładam strukturę:
+ * Struktura:
  *  - server.js
  *  - public/
  *      index.html
  *      manifest.webmanifest
  *      favicon.png
- *      (inne assety)
  */
 const PUBLIC_DIR = path.join(__dirname, "public");
 app.use(express.static(PUBLIC_DIR));
 
-// SPA fallback → zawsze index.html
+// SPA fallback
 app.get("*", (req, res) => {
   res.sendFile(path.join(PUBLIC_DIR, "index.html"));
 });
