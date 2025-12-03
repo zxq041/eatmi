@@ -42,43 +42,43 @@
     .drag-hover{outline:2px dashed #11182733; outline-offset: -8px}
 
     @keyframes logo-glow {
-      0%,100% {
-        box-shadow: 0 0 0 0 rgba(255,193,7,0.0);
-      }
-      50% {
-        box-shadow: 0 0 0 8px rgba(255,193,7,0.35);
-      }
+      0%,100% { box-shadow: 0 0 0 0 rgba(255,193,7,0.0); }
+      50% { box-shadow: 0 0 0 8px rgba(255,193,7,0.35); }
     }
-    .logo-glow {
-      animation: logo-glow 3s ease-in-out infinite;
-    }
+    .logo-glow { animation: logo-glow 3s ease-in-out infinite; }
 
     @keyframes toast-enter {
-      0% {
-        opacity: 0;
-        transform: translateY(16px) scale(0.96);
-      }
-      60% {
-        opacity: 1;
-        transform: translateY(0) scale(1.02);
-      }
-      100% {
-        opacity: 1;
-        transform: translateY(0) scale(1);
-      }
+      0% { opacity: 0; transform: translateY(16px) scale(0.96); }
+      60% { opacity: 1; transform: translateY(0) scale(1.02); }
+      100% { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    @keyframes toast-progress { from { width: 100%; } to { width: 0%; } }
+    .toast-enter { animation: toast-enter 0.35s ease-out forwards; }
+    .toast-bar { animation: toast-progress 2.5s linear forwards; }
+
+    /* --- Mini animacja w Hero --- */
+    @keyframes floaty {
+      0%, 100% { transform: translateY(0) rotate(0deg); }
+      50%      { transform: translateY(-10px) rotate(1deg); }
+    }
+    @keyframes floaty2 {
+      0%, 100% { transform: translateY(0) rotate(0deg); }
+      50%      { transform: translateY(8px) rotate(-1deg); }
+    }
+    @keyframes shimmer {
+      0%   { background-position: 0% 50%; }
+      100% { background-position: 100% 50%; }
     }
 
-    @keyframes toast-progress {
-      from { width: 100%; }
-      to   { width: 0%; }
-    }
+    .hero-anim-card { animation: floaty 3.8s ease-in-out infinite; }
+    .hero-anim-card2 { animation: floaty2 4.6s ease-in-out infinite; }
 
-    .toast-enter {
-      animation: toast-enter 0.35s ease-out forwards;
-    }
-
-    .toast-bar {
-      animation: toast-progress 2.5s linear forwards;
+    .hero-anim-glow {
+      background: linear-gradient(120deg, rgba(255,193,7,0.25), rgba(16,185,129,0.18), rgba(59,130,246,0.18));
+      background-size: 200% 200%;
+      animation: shimmer 6s linear infinite;
+      filter: blur(18px);
+      opacity: .9;
     }
   </style>
 </head>
@@ -97,126 +97,83 @@
 
     // --- Dane kategorii ---
     const PRODUCT_CATEGORIES = [
-      {
-        id: 'boxy-sniadaniowe',
-        name: 'Boxy śniadaniowe',
-        icon: 'package-open',
-        description: 'Gotowe zestawy śniadaniowe w trzech rozmiarach.'
-      },
-      {
-        id: 'boxy-lunchowe',
-        name: 'Boxy lunchowe',
-        icon: 'utensils-crossed',
-        description: 'Syte boxy lunchowe idealne na przerwę w pracy.'
-      },
-      {
-        id: 'kanapki',
-        name: 'Kanapki',
-        icon: 'sandwich',
-        description: 'Świeże kanapki na ciepło i na zimno.'
-      },
-      {
-        id: 'salatki',
-        name: 'Sałatki',
-        icon: 'leaf',
-        description: 'Lekkie i sycące sałatki.'
-      },
-      {
-        id: 'desery',
-        name: 'Desery',
-        icon: 'ice-cream',
-        description: 'Słodkie zakończenie Twojego zamówienia.'
-      },
-      {
-        id: 'napoje',
-        name: 'Napoje',
-        icon: 'cup-soda',
-        description: 'Zimne napoje, soki i kawy mrożone.'
-      },
+      { id: 'boxy-sniadaniowe', name: 'Boxy śniadaniowe', icon: 'package-open', description: 'Gotowe zestawy śniadaniowe w trzech rozmiarach.' },
+      { id: 'boxy-lunchowe', name: 'Boxy lunchowe', icon: 'utensils-crossed', description: 'Syte boxy lunchowe idealne na przerwę w pracy.' },
+      { id: 'kanapki', name: 'Kanapki', icon: 'sandwich', description: 'Świeże kanapki na ciepło i na zimno.' },
+      { id: 'salatki', name: 'Sałatki', icon: 'leaf', description: 'Lekkie i sycące sałatki.' },
+      { id: 'desery', name: 'Desery', icon: 'ice-cream', description: 'Słodkie zakończenie Twojego zamówienia.' },
+      { id: 'napoje', name: 'Napoje', icon: 'cup-soda', description: 'Zimne napoje, soki i kawy mrożone.' },
     ];
 
     // --- Menu kategorii (przykładowe pozycje) ---
-
-    // 4 typy × 3 rozmiary = 12 boxów śniadaniowych
     const BREAKFAST_PRODUCTS = [
-      { id:'bs-klasyk-s',  name:'Box śniadaniowy Klasyk — mały',   price: 29, subtitle:'Bułka, jajko, ser, warzywa' },
-      { id:'bs-klasyk-m',  name:'Box śniadaniowy Klasyk — średni', price: 39, subtitle:'Bułka, jajko, ser, szynka, jogurt' },
-      { id:'bs-klasyk-l',  name:'Box śniadaniowy Klasyk — duży',   price: 49, subtitle:'2 kanapki, jogurt, owoc, sok' },
-
-      { id:'bs-fit-s',     name:'Box śniadaniowy Fit — mały',      price: 31, subtitle:'Owsianka, owoc, orzechy' },
-      { id:'bs-fit-m',     name:'Box śniadaniowy Fit — średni',    price: 41, subtitle:'Owsianka, jogurt, owoc, sok' },
-      { id:'bs-fit-l',     name:'Box śniadaniowy Fit — duży',      price: 51, subtitle:'Owsianka, jogurt, owoc, smoothie' },
-
-      { id:'bs-vege-s',    name:'Box śniadaniowy Vege — mały',     price: 29, subtitle:'Kanapka vege, hummus, warzywa' },
-      { id:'bs-vege-m',    name:'Box śniadaniowy Vege — średni',   price: 39, subtitle:'Kanapka vege, sałatka, owoc' },
-      { id:'bs-vege-l',    name:'Box śniadaniowy Vege — duży',     price: 49, subtitle:'2 kanapki vege, sałatka, sok' },
-
-      { id:'bs-slodki-s',  name:'Box śniadaniowy Słodki — mały',   price: 29, subtitle:'Croissant, dżem, kawałek brownie' },
-      { id:'bs-slodki-m',  name:'Box śniadaniowy Słodki — średni', price: 39, subtitle:'Croissant, jogurt z granolą, sok' },
-      { id:'bs-slodki-l',  name:'Box śniadaniowy Słodki — duży',   price: 49, subtitle:'Croissant, tost francuski, jogurt, sok' },
+      { id:'bs-klasyk-s', name:'Box śniadaniowy Klasyk — mały', price: 29, subtitle:'Bułka, jajko, ser, warzywa' },
+      { id:'bs-klasyk-m', name:'Box śniadaniowy Klasyk — średni', price: 39, subtitle:'Bułka, jajko, ser, szynka, jogurt' },
+      { id:'bs-klasyk-l', name:'Box śniadaniowy Klasyk — duży', price: 49, subtitle:'2 kanapki, jogurt, owoc, sok' },
+      { id:'bs-fit-s', name:'Box śniadaniowy Fit — mały', price: 31, subtitle:'Owsianka, owoc, orzechy' },
+      { id:'bs-fit-m', name:'Box śniadaniowy Fit — średni', price: 41, subtitle:'Owsianka, jogurt, owoc, sok' },
+      { id:'bs-fit-l', name:'Box śniadaniowy Fit — duży', price: 51, subtitle:'Owsianka, jogurt, owoc, smoothie' },
+      { id:'bs-vege-s', name:'Box śniadaniowy Vege — mały', price: 29, subtitle:'Kanapka vege, hummus, warzywa' },
+      { id:'bs-vege-m', name:'Box śniadaniowy Vege — średni', price: 39, subtitle:'Kanapka vege, sałatka, owoc' },
+      { id:'bs-vege-l', name:'Box śniadaniowy Vege — duży', price: 49, subtitle:'2 kanapki vege, sałatka, sok' },
+      { id:'bs-slodki-s', name:'Box śniadaniowy Słodki — mały', price: 29, subtitle:'Croissant, dżem, kawałek brownie' },
+      { id:'bs-slodki-m', name:'Box śniadaniowy Słodki — średni', price: 39, subtitle:'Croissant, jogurt z granolą, sok' },
+      { id:'bs-slodki-l', name:'Box śniadaniowy Słodki — duży', price: 49, subtitle:'Croissant, tost francuski, jogurt, sok' },
     ];
 
-    // 4 typy × 3 rozmiary = 12 boxów lunchowych
     const LUNCH_PRODUCTS = [
-      { id:'bl-klasyk-s',  name:'Box lunchowy Klasyk — mały',      price: 35, subtitle:'Burger, frytki mini, sos' },
-      { id:'bl-klasyk-m',  name:'Box lunchowy Klasyk — średni',    price: 42, subtitle:'Burger, frytki, napój' },
-      { id:'bl-klasyk-l',  name:'Box lunchowy Klasyk — duży',      price: 49, subtitle:'Burger, frytki duże, napój, deser' },
-
-      { id:'bl-fit-s',     name:'Box lunchowy Fit — mały',         price: 37, subtitle:'Sałatka z kurczakiem, woda' },
-      { id:'bl-fit-m',     name:'Box lunchowy Fit — średni',       price: 44, subtitle:'Sałatka, pieczywo, woda' },
-      { id:'bl-fit-l',     name:'Box lunchowy Fit — duży',         price: 51, subtitle:'Sałatka, pieczywo, napój, deser' },
-
-      { id:'bl-vege-s',    name:'Box lunchowy Vege — mały',        price: 35, subtitle:'Bowl vege, woda' },
-      { id:'bl-vege-m',    name:'Box lunchowy Vege — średni',      price: 42, subtitle:'Bowl vege, napój' },
-      { id:'bl-vege-l',    name:'Box lunchowy Vege — duży',        price: 49, subtitle:'Bowl vege, napój, deser' },
-
-      { id:'bl-office-s',  name:'Box lunchowy Office — mały',      price: 36, subtitle:'Kanapka, chipsy, napój' },
-      { id:'bl-office-m',  name:'Box lunchowy Office — średni',    price: 43, subtitle:'Kanapka, sałatka mini, napój' },
-      { id:'bl-office-l',  name:'Box lunchowy Office — duży',      price: 50, subtitle:'2 kanapki, sałatka, napój' },
+      { id:'bl-klasyk-s', name:'Box lunchowy Klasyk — mały', price: 35, subtitle:'Burger, frytki mini, sos' },
+      { id:'bl-klasyk-m', name:'Box lunchowy Klasyk — średni', price: 42, subtitle:'Burger, frytki, napój' },
+      { id:'bl-klasyk-l', name:'Box lunchowy Klasyk — duży', price: 49, subtitle:'Burger, frytki duże, napój, deser' },
+      { id:'bl-fit-s', name:'Box lunchowy Fit — mały', price: 37, subtitle:'Sałatka z kurczakiem, woda' },
+      { id:'bl-fit-m', name:'Box lunchowy Fit — średni', price: 44, subtitle:'Sałatka, pieczywo, woda' },
+      { id:'bl-fit-l', name:'Box lunchowy Fit — duży', price: 51, subtitle:'Sałatka, pieczywo, napój, deser' },
+      { id:'bl-vege-s', name:'Box lunchowy Vege — mały', price: 35, subtitle:'Bowl vege, woda' },
+      { id:'bl-vege-m', name:'Box lunchowy Vege — średni', price: 42, subtitle:'Bowl vege, napój' },
+      { id:'bl-vege-l', name:'Box lunchowy Vege — duży', price: 49, subtitle:'Bowl vege, napój, deser' },
+      { id:'bl-office-s', name:'Box lunchowy Office — mały', price: 36, subtitle:'Kanapka, chipsy, napój' },
+      { id:'bl-office-m', name:'Box lunchowy Office — średni', price: 43, subtitle:'Kanapka, sałatka mini, napój' },
+      { id:'bl-office-l', name:'Box lunchowy Office — duży', price: 50, subtitle:'2 kanapki, sałatka, napój' },
     ];
 
-    // 8 kanapek
     const SANDWICHES = [
-      { id:'k-kurczak',   name:'Kanapka z kurczakiem',          price: 18, subtitle:'Kurczak, sałata, sos jogurtowy' },
-      { id:'k-indyk',     name:'Kanapka z indykiem',            price: 19, subtitle:'Indyk, ser, warzywa, sos miodowo-musztardowy' },
-      { id:'k-szarpana',  name:'Kanapka z szarpaną wieprzowiną',price: 21, subtitle:'Pulled pork, coleslaw, pikle' },
-      { id:'k-klasyk',    name:'Kanapka klasyczna',             price: 16, subtitle:'Szynka, ser, ogórek, masło' },
-      { id:'k-vege-hummus',name:'Kanapka vege z hummusem',      price: 17, subtitle:'Hummus, warzywa, pestki' },
-      { id:'k-vege-avo',  name:'Kanapka z awokado i jajkiem',   price: 19, subtitle:'Awokado, jajko, rukola' },
-      { id:'k-panini',    name:'Panini z kurczakiem',           price: 20, subtitle:'Grillowana kanapka z kurczakiem i serem' },
-      { id:'k-panini-vege',name:'Panini vege',                  price: 19, subtitle:'Grillowana kanapka z warzywami i serem' },
+      { id:'k-kurczak', name:'Kanapka z kurczakiem', price: 18, subtitle:'Kurczak, sałata, sos jogurtowy' },
+      { id:'k-indyk', name:'Kanapka z indykiem', price: 19, subtitle:'Indyk, ser, warzywa, sos miodowo-musztardowy' },
+      { id:'k-szarpana', name:'Kanapka z szarpaną wieprzowiną', price: 21, subtitle:'Pulled pork, coleslaw, pikle' },
+      { id:'k-klasyk', name:'Kanapka klasyczna', price: 16, subtitle:'Szynka, ser, ogórek, masło' },
+      { id:'k-vege-hummus', name:'Kanapka vege z hummusem', price: 17, subtitle:'Hummus, warzywa, pestki' },
+      { id:'k-vege-avo', name:'Kanapka z awokado i jajkiem', price: 19, subtitle:'Awokado, jajko, rukola' },
+      { id:'k-panini', name:'Panini z kurczakiem', price: 20, subtitle:'Grillowana kanapka z kurczakiem i serem' },
+      { id:'k-panini-vege', name:'Panini vege', price: 19, subtitle:'Grillowana kanapka z warzywami i serem' },
     ];
 
-    // 4 sałatki
     const SALADS = [
-      { id:'s-cezar',   name:'Sałatka Caesar',            price: 24, subtitle:'Kurczak, parmezan, grzanki, sos Caesar' },
-      { id:'s-quinoa',  name:'Sałatka z quinoa',          price: 25, subtitle:'Quinoa, warzywa, fetą, pestki' },
-      { id:'s-vege',    name:'Sałatka vege z hummusem',   price: 23, subtitle:'Warzywa, hummus, pieczony batat' },
-      { id:'s-burak',   name:'Sałatka z burakiem i kozim serem', price: 25, subtitle:'Burak, ser kozi, rukola, orzechy' },
+      { id:'s-cezar', name:'Sałatka Caesar', price: 24, subtitle:'Kurczak, parmezan, grzanki, sos Caesar' },
+      { id:'s-quinoa', name:'Sałatka z quinoa', price: 25, subtitle:'Quinoa, warzywa, fetą, pestki' },
+      { id:'s-vege', name:'Sałatka vege z hummusem', price: 23, subtitle:'Warzywa, hummus, pieczony batat' },
+      { id:'s-burak', name:'Sałatka z burakiem i kozim serem', price: 25, subtitle:'Burak, ser kozi, rukola, orzechy' },
     ];
 
-    // 4 desery
     const DESSERTS = [
-      { id:'d-brownie',   name:'Brownie czekoladowe',      price: 9,  subtitle:'Gęste, mocno czekoladowe' },
-      { id:'d-cheesecake',name:'Sernik klasyczny',         price: 11, subtitle:'Na kruchym spodzie' },
-      { id:'d-cookie',    name:'Cookie z czekoladą',       price: 7,  subtitle:'Miękkie w środku, chrupiące na zewnątrz' },
-      { id:'d-fruit',     name:'Puchar owoców sezonowych', price: 10, subtitle:'Świeże, krojone owoce' },
+      { id:'d-brownie', name:'Brownie czekoladowe', price: 9, subtitle:'Gęste, mocno czekoladowe' },
+      { id:'d-cheesecake', name:'Sernik klasyczny', price: 11, subtitle:'Na kruchym spodzie' },
+      { id:'d-cookie', name:'Cookie z czekoladą', price: 7, subtitle:'Miękkie w środku, chrupiące na zewnątrz' },
+      { id:'d-fruit', name:'Puchar owoców sezonowych', price: 10, subtitle:'Świeże, krojone owoce' },
     ];
 
-    // 12 napojów
     const DRINKS = [
-      { id:'n-cola-05',   name:'Cola 0,5 l',              price: 8,  subtitle:'Schłodzony napój gazowany' },
-      { id:'n-cola-zero', name:'Cola Zero 0,5 l',         price: 8,  subtitle:'Bez cukru' },
-      { id:'n-sprite',    name:'Lemon-lime 0,5 l',        price: 8,  subtitle:'Napój cytrusowy' },
-      { id:'n-fanta',     name:'Orange 0,5 l',            price: 8,  subtitle:'Napój pomarańczowy' },
-      { id:'n-water',     name:'Woda niegazowana 0,5 l',  price: 5,  subtitle:'Butelkowana' },
-      { id:'n-water-gas', name:'Woda gazowana 0,5 l',     price: 5,  subtitle:'Butelkowana' },
-      { id:'n-juice-o',   name:'Sok pomarańczowy 0,3 l',  price: 9,  subtitle:'100% owoców' },
-      { id:'n-juice-a',   name:'Sok jabłkowy 0,3 l',      price: 9,  subtitle:'NFC' },
-      { id:'n-lemonade',  name:'Lemoniada domowa 0,4 l',  price: 12, subtitle:'Cytryna, mięta, lód' },
-      { id:'n-icecoffee', name:'Kawa mrożona 0,4 l',      price: 14, subtitle:'Espresso, mleko, lód' },
-      { id:'n-tea',       name:'Herbata mrożona 0,4 l',   price: 11, subtitle:'Domowa, cytryna' },
-      { id:'n-smoothie',  name:'Smoothie owocowe 0,4 l',  price: 15, subtitle:'Miks owoców sezonowych' },
+      { id:'n-cola-05', name:'Cola 0,5 l', price: 8, subtitle:'Schłodzony napój gazowany' },
+      { id:'n-cola-zero', name:'Cola Zero 0,5 l', price: 8, subtitle:'Bez cukru' },
+      { id:'n-sprite', name:'Lemon-lime 0,5 l', price: 8, subtitle:'Napój cytrusowy' },
+      { id:'n-fanta', name:'Orange 0,5 l', price: 8, subtitle:'Napój pomarańczowy' },
+      { id:'n-water', name:'Woda niegazowana 0,5 l', price: 5, subtitle:'Butelkowana' },
+      { id:'n-water-gas', name:'Woda gazowana 0,5 l', price: 5, subtitle:'Butelkowana' },
+      { id:'n-juice-o', name:'Sok pomarańczowy 0,3 l', price: 9, subtitle:'100% owoców' },
+      { id:'n-juice-a', name:'Sok jabłkowy 0,3 l', price: 9, subtitle:'NFC' },
+      { id:'n-lemonade', name:'Lemoniada domowa 0,4 l', price: 12, subtitle:'Cytryna, mięta, lód' },
+      { id:'n-icecoffee', name:'Kawa mrożona 0,4 l', price: 14, subtitle:'Espresso, mleko, lód' },
+      { id:'n-tea', name:'Herbata mrożona 0,4 l', price: 11, subtitle:'Domowa, cytryna' },
+      { id:'n-smoothie', name:'Smoothie owocowe 0,4 l', price: 15, subtitle:'Miks owoców sezonowych' },
     ];
 
     const PRODUCTS = {
@@ -383,7 +340,7 @@
       </header>
     );
 
-    // --- HERO BEZ ZDJĘCIA, Z "FAJNYM ELEMENTEM" PO PRAWEJ ---
+    // --- HERO z animacją po prawej ---
     const Hero = () => (
       <section className="relative overflow-hidden">
         <div className="max-w-6xl mx-auto px-4 py-12 md:py-20 grid md:grid-cols-2 gap-10 items-center">
@@ -415,102 +372,66 @@
             </div>
           </div>
 
-          {/* NOWY ELEMENT PO PRAWEJ ZAMIAST ZDJĘCIA */}
+          {/* PRAWA STRONA HERO — mini animacja */}
           <div className="relative">
-            <div className="grid gap-4">
-              {/* Pasek kroków */}
-              <div className="bg-white rounded-2xl shadow-soft border border-gray-200 p-4">
-                <div className="text-xs uppercase tracking-[0.16em] text-gray-500 font-semibold mb-2">
-                  Jak to działa?
+            <div className="absolute -inset-6 hero-anim-glow rounded-[32px]"></div>
+
+            <div className="relative grid gap-4">
+              <div className="hero-anim-card bg-white rounded-2xl shadow-soft border border-gray-200 p-5">
+                <div className="flex items-center gap-3">
+                  <div className="w-11 h-11 rounded-xl bg-brand-yellow/20 grid place-items-center">
+                    <i data-lucide="package-open" className="w-6 h-6 text-gray-900"></i>
+                  </div>
+                  <div>
+                    <div className="text-xs uppercase tracking-[0.16em] text-gray-500 font-semibold">
+                      Box w drodze
+                    </div>
+                    <div className="text-lg font-extrabold leading-tight">
+                      Klasyk — średni
+                    </div>
+                    <div className="text-sm text-gray-500">
+                      Przygotowujemy Twoje zamówienie
+                    </div>
+                  </div>
                 </div>
-                <ol className="space-y-2 text-sm">
-                  <li className="flex gap-3 items-start">
-                    <span className="w-6 h-6 rounded-full bg-brand-yellow text-gray-900 text-xs font-bold flex items-center justify-center mt-0.5">
-                      1
-                    </span>
-                    <div>
-                      <div className="font-semibold">Wybierz kategorię</div>
-                      <div className="text-gray-500">Boxy śniadaniowe, lunchowe, kanapki, sałatki, desery i napoje.</div>
-                    </div>
-                  </li>
-                  <li className="flex gap-3 items-start">
-                    <span className="w-6 h-6 rounded-full bg-gray-900 text-white text-xs font-bold flex items-center justify-center mt-0.5">
-                      2
-                    </span>
-                    <div>
-                      <div className="font-semibold">Dodaj do koszyka</div>
-                      <div className="text-gray-500">Kilka klików — jak przy zamawianiu w kiosku w restauracji.</div>
-                    </div>
-                  </li>
-                  <li className="flex gap-3 items-start">
-                    <span className="w-6 h-6 rounded-full bg-gray-100 text-gray-900 text-xs font-bold flex items-center justify-center mt-0.5">
-                      3
-                    </span>
-                    <div>
-                      <div className="font-semibold">Potwierdź i czekaj na dostawę</div>
-                      <div className="text-gray-500">My zajmujemy się resztą — świeże boxy na czas.</div>
-                    </div>
-                  </li>
-                </ol>
+
+                <div className="mt-4">
+                  <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
+                    <div className="h-full w-2/3 bg-brand-yellow rounded-full animate-pulse"></div>
+                  </div>
+                  <div className="mt-2 flex justify-between text-xs text-gray-500">
+                    <span>Start</span>
+                    <span>~20 min</span>
+                  </div>
+                </div>
               </div>
 
-              {/* Mini "live" karta zamówień */}
-              <div className="bg-white rounded-2xl shadow-soft border border-gray-200 p-4 flex flex-col gap-3">
+              <div className="hero-anim-card2 bg-white rounded-2xl shadow-soft border border-gray-200 p-5">
                 <div className="flex items-center justify-between">
-                  <div className="text-xs uppercase tracking-[0.16em] text-gray-500 font-semibold">
-                    Dziś popularne
+                  <div className="text-sm font-semibold text-gray-900">Co dzisiaj wybierasz?</div>
+                  <span className="text-xs bg-emerald-50 text-emerald-700 px-2 py-1 rounded-full">
+                    świeże
+                  </span>
+                </div>
+
+                <div className="mt-3 grid grid-cols-3 gap-3 text-xs">
+                  <div className="rounded-xl bg-gray-50 border border-gray-100 p-3 text-center">
+                    <i data-lucide="sun" className="w-5 h-5 mx-auto mb-1"></i>
+                    Śniadania
                   </div>
-                  <div className="inline-flex items-center gap-1 text-xs text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                    <span>W realnym czasie</span>
+                  <div className="rounded-xl bg-gray-50 border border-gray-100 p-3 text-center">
+                    <i data-lucide="utensils-crossed" className="w-5 h-5 mx-auto mb-1"></i>
+                    Lunch
+                  </div>
+                  <div className="rounded-xl bg-gray-50 border border-gray-100 p-3 text-center">
+                    <i data-lucide="sandwich" className="w-5 h-5 mx-auto mb-1"></i>
+                    Kanapki
                   </div>
                 </div>
 
-                <div className="space-y-2 text-sm">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span className="w-7 h-7 rounded-lg bg-brand-yellow/20 flex items-center justify-center">
-                        <i data-lucide="sun" className="w-4 h-4"></i>
-                      </span>
-                      <div>
-                        <div className="font-semibold leading-tight">Box śniadaniowy Klasyk — średni</div>
-                        <div className="text-[11px] text-gray-500">Właśnie zamówione na Woli</div>
-                      </div>
-                    </div>
-                    <span className="text-xs bg-gray-900 text-white rounded-full px-2 py-1">
-                      TOP 1
-                    </span>
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span className="w-7 h-7 rounded-lg bg-brand-yellow/20 flex items-center justify-center">
-                        <i data-lucide="utensils-crossed" className="w-4 h-4"></i>
-                      </span>
-                      <div>
-                        <div className="font-semibold leading-tight">Box lunchowy Fit — duży</div>
-                        <div className="text-[11px] text-gray-500">Popularny w godzinach 11:00–13:00</div>
-                      </div>
-                    </div>
-                    <span className="text-xs text-gray-600">
-                      ⭐ 4.9
-                    </span>
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span className="w-7 h-7 rounded-lg bg-brand-yellow/20 flex items-center justify-center">
-                        <i data-lucide="sandwich" className="w-4 h-4"></i>
-                      </span>
-                      <div>
-                        <div className="font-semibold leading-tight">Kanapka z awokado i jajkiem</div>
-                        <div className="text-[11px] text-gray-500">Idealna na szybkie śniadanie</div>
-                      </div>
-                    </div>
-                    <span className="text-xs text-gray-600">
-                      ⏱️ ~15 min
-                    </span>
-                  </div>
+                <div className="mt-3 flex items-center gap-2 text-sm text-gray-600">
+                  <span className="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                  Złóż zamówienie w kilka klików
                 </div>
               </div>
             </div>
@@ -532,11 +453,8 @@
       </div>
     );
 
-    // --- Karta kategorii na stronie głównej ---
     const CategoryCard = ({ category }) => {
-      const handleClick = () => {
-        window.location.hash = `#/kategoria/${category.id}`;
-      };
+      const handleClick = () => { window.location.hash = `#/kategoria/${category.id}`; };
       return (
         <button
           type="button"
@@ -555,9 +473,7 @@
               <i data-lucide={category.icon} className="w-5 h-5 text-gray-900"></i>
             </div>
           </div>
-          <p className="mt-3 text-sm text-gray-600">
-            {category.description}
-          </p>
+          <p className="mt-3 text-sm text-gray-600">{category.description}</p>
           <div className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-gray-900 group-hover:gap-3 transition">
             Otwórz kategorię
             <i data-lucide="arrow-right" className="w-4 h-4"></i>
@@ -566,7 +482,6 @@
       );
     };
 
-    // --- Widok kategorii (lista pozycji jak w kiosku) ---
     const CategoryPage = ({ categoryId }) => {
       const { add } = useCart();
       const category = PRODUCT_CATEGORIES.find(c => c.id === categoryId);
@@ -587,11 +502,7 @@
       }
 
       const handleAdd = (item) => {
-        add({
-          type: 'product',
-          name: item.name,
-          price: item.price,
-        });
+        add({ type: 'product', name: item.name, price: item.price });
       };
 
       return (
@@ -620,19 +531,11 @@
                   className="bg-white border border-gray-200 rounded-2xl p-5 flex flex-col justify-between shadow-soft hover:shadow-md hover:-translate-y-0.5 transition"
                 >
                   <div>
-                    <h3 className="text-base font-extrabold text-gray-900">
-                      {item.name}
-                    </h3>
-                    {item.subtitle && (
-                      <p className="mt-1 text-sm text-gray-600">
-                        {item.subtitle}
-                      </p>
-                    )}
+                    <h3 className="text-base font-extrabold text-gray-900">{item.name}</h3>
+                    {item.subtitle && <p className="mt-1 text-sm text-gray-600">{item.subtitle}</p>}
                   </div>
                   <div className="mt-4 flex items-center justify-between gap-3">
-                    <div className="text-lg font-extrabold">
-                      {currency(item.price)}
-                    </div>
+                    <div className="text-lg font-extrabold">{currency(item.price)}</div>
                     <button
                       type="button"
                       onClick={() => handleAdd(item)}
@@ -650,11 +553,10 @@
       );
     };
 
-    // >>> Koszyk + dodatki (zostawione, ale bez powiązania z kreatorem)
     const EXTRA_ITEMS = [
-      { id:'extra-brownie',  name:'Brownie do kawy',       price: 9 },
-      { id:'extra-lemoniada',name:'Domowa lemoniada 0,4l', price: 12 },
-      { id:'extra-cookie',   name:'Cookie czekoladowe',    price: 7 },
+      { id:'extra-brownie', name:'Brownie do kawy', price: 9 },
+      { id:'extra-lemoniada', name:'Domowa lemoniada 0,4l', price: 12 },
+      { id:'extra-cookie', name:'Cookie czekoladowe', price: 7 },
     ];
 
     const Koszyk = () => {
@@ -684,12 +586,7 @@
 
                         <div className="flex flex-col sm:flex-row md:flex-row gap-3 md:gap-4 items-stretch md:items-center w-full md:w-auto justify-between md:justify-end">
                           <div className="flex items-center gap-2 self-start">
-                            <button
-                              onClick={()=> decQty(item.id)}
-                              className="w-8 h-8 rounded-lg border border-gray-200 grid place-items-center"
-                            >
-                              −
-                            </button>
+                            <button onClick={()=> decQty(item.id)} className="w-8 h-8 rounded-lg border border-gray-200 grid place-items-center">−</button>
                             <input
                               value={item.qty||1}
                               onChange={(e)=> setQty(item.id, parseInt(e.target.value||'1',10))}
@@ -697,12 +594,7 @@
                               inputMode="numeric"
                               pattern="[0-9]*"
                             />
-                            <button
-                              onClick={()=> incQty(item.id)}
-                              className="w-8 h-8 rounded-lg border border-gray-200 grid place-items-center"
-                            >
-                              +
-                            </button>
+                            <button onClick={()=> incQty(item.id)} className="w-8 h-8 rounded-lg border border-gray-200 grid place-items-center">+</button>
                           </div>
 
                           <div className="text-right self-center">
@@ -710,12 +602,7 @@
                             <div className="text-xs text-gray-500 whitespace-nowrap">({currency(item.price)} / szt.)</div>
                           </div>
 
-                          <button
-                            onClick={()=> remove(item.id)}
-                            className="text-red-600 hover:underline self-center text-sm"
-                          >
-                            Usuń
-                          </button>
+                          <button onClick={()=> remove(item.id)} className="text-red-600 hover:underline self-center text-sm">Usuń</button>
                         </div>
                       </div>
                     ))}
@@ -726,16 +613,10 @@
                       <span className="font-extrabold">{currency(total)}</span>
                     </div>
                     <div className="mt-4 grid gap-2">
-                      <button
-                        onClick={goToCheckout}
-                        className="w-full bg-brand-yellow text-gray-900 font-semibold rounded-xl px-4 py-3"
-                      >
+                      <button onClick={goToCheckout} className="w-full bg-brand-yellow text-gray-900 font-semibold rounded-xl px-4 py-3">
                         Przejdź do zamówienia
                       </button>
-                      <button
-                        onClick={clear}
-                        className="w-full bg-gray-100 text-gray-700 rounded-xl px-4 py-3"
-                      >
+                      <button onClick={clear} className="w-full bg-gray-100 text-gray-700 rounded-xl px-4 py-3">
                         Wyczyść koszyk
                       </button>
                     </div>
@@ -800,125 +681,85 @@
                 <div className="grid md:grid-cols-2 gap-4">
                   <div>
                     <label className="text-xs uppercase tracking-wider text-gray-500">Imię i nazwisko *</label>
-                    <input
-                      value={form.imieNazwisko}
-                      onChange={e=>handle('imieNazwisko', e.target.value)}
-                      className="input w-full border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-brand-yellow bg-white"
-                    />
+                    <input value={form.imieNazwisko} onChange={e=>handle('imieNazwisko', e.target.value)}
+                      className="input w-full border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-brand-yellow bg-white"/>
                   </div>
                   <div>
                     <label className="text-xs uppercase tracking-wider text-gray-500">Nr telefonu *</label>
-                    <input
-                      value={form.telefon}
-                      onChange={e=>handle('telefon', e.target.value)}
-                      className="input w-full border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-brand-yellow bg-white"
-                    />
+                    <input value={form.telefon} onChange={e=>handle('telefon', e.target.value)}
+                      className="input w-full border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-brand-yellow bg-white"/>
                   </div>
                   <div>
                     <label className="text-xs uppercase tracking-wider text-gray-500">Adres email</label>
-                    <input
-                      value={form.email}
-                      onChange={e=>handle('email', e.target.value)}
-                      className="input w-full border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-brand-yellow bg-white"
-                    />
+                    <input value={form.email} onChange={e=>handle('email', e.target.value)}
+                      className="input w-full border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-brand-yellow bg-white"/>
                   </div>
                   <div>
                     <label className="text-xs uppercase tracking-wider text-gray-500">Miasto *</label>
-                    <input
-                      value={form.miasto}
-                      onChange={e=>handle('miasto', e.target.value)}
-                      className="input w-full border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-brand-yellow bg-white"
-                    />
+                    <input value={form.miasto} onChange={e=>handle('miasto', e.target.value)}
+                      className="input w-full border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-brand-yellow bg-white"/>
                   </div>
                   <div>
                     <label className="text-xs uppercase tracking-wider text-gray-500">Kod pocztowy</label>
-                    <input
-                      value={form.kod}
-                      onChange={e=>handle('kod', e.target.value)}
-                      className="input w-full border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-brand-yellow bg-white"
-                    />
+                    <input value={form.kod} onChange={e=>handle('kod', e.target.value)}
+                      className="input w-full border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-brand-yellow bg-white"/>
                   </div>
                   <div>
                     <label className="text-xs uppercase tracking-wider text-gray-500">Ulica *</label>
-                    <input
-                      value={form.ulica}
-                      onChange={e=>handle('ulica', e.target.value)}
-                      className="input w-full border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-brand-yellow bg-white"
-                    />
+                    <input value={form.ulica} onChange={e=>handle('ulica', e.target.value)}
+                      className="input w-full border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-brand-yellow bg-white"/>
                   </div>
                   <div>
                     <label className="text-xs uppercase tracking-wider text-gray-500">Nr budynku</label>
-                    <input
-                      value={form.nrBud}
-                      onChange={e=>handle('nrBud', e.target.value)}
-                      className="input w-full border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-brand-yellow bg-white"
-                    />
+                    <input value={form.nrBud} onChange={e=>handle('nrBud', e.target.value)}
+                      className="input w-full border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-brand-yellow bg-white"/>
                   </div>
                   <div>
                     <label className="text-xs uppercase tracking-wider text-gray-500">Piętro</label>
-                    <input
-                      value={form.pietro}
-                      onChange={e=>handle('pietro', e.target.value)}
-                      className="input w-full border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-brand-yellow bg-white"
-                    />
+                    <input value={form.pietro} onChange={e=>handle('pietro', e.target.value)}
+                      className="input w-full border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-brand-yellow bg-white"/>
                   </div>
                   <div>
                     <label className="text-xs uppercase tracking-wider text-gray-500">Nr lokalu / mieszkania</label>
-                    <input
-                      value={form.lokal}
-                      onChange={e=>handle('lokal', e.target.value)}
-                      className="input w-full border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-brand-yellow bg-white"
-                    />
+                    <input value={form.lokal} onChange={e=>handle('lokal', e.target.value)}
+                      className="input w-full border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-brand-yellow bg-white"/>
                   </div>
                   <div className="md:col-span-2">
                     <label className="text-xs uppercase tracking-wider text-gray-500">Uwagi do zamówienia</label>
-                    <textarea
-                      value={form.uwagi}
-                      onChange={e=>handle('uwagi', e.target.value)}
-                      className="w-full border border-gray-200 rounded-xl px-4 py-3 min-h-[100px]"
-                    ></textarea>
+                    <textarea value={form.uwagi} onChange={e=>handle('uwagi', e.target.value)}
+                      className="w-full border border-gray-200 rounded-xl px-4 py-3 min-h-[100px]"></textarea>
                   </div>
                 </div>
+
                 <div className="mt-4">
                   <label className="flex items-center gap-2 text-sm">
-                    <input
-                      type="checkbox"
-                      checked={form.faktura}
-                      onChange={e=>handle('faktura', e.target.checked)}
-                    />
+                    <input type="checkbox" checked={form.faktura} onChange={e=>handle('faktura', e.target.checked)} />
                     Chcę dane do faktury
                   </label>
                   {form.faktura && (
                     <div className="grid md:grid-cols-2 gap-4 mt-3">
                       <div>
                         <label className="text-xs uppercase tracking-wider text-gray-500">NIP</label>
-                        <input
-                          value={form.nip}
-                          onChange={e=>handle('nip', e.target.value)}
-                          className="input w-full border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-brand-yellow bg-white"
-                        />
+                        <input value={form.nip} onChange={e=>handle('nip', e.target.value)}
+                          className="input w-full border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-brand-yellow bg-white"/>
                       </div>
                       <div>
                         <label className="text-xs uppercase tracking-wider text-gray-500">Nazwa firmy</label>
-                        <input
-                          value={form.firma}
-                          onChange={e=>handle('firma', e.target.value)}
-                          className="input w-full border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-brand-yellow bg-white"
-                        />
+                        <input value={form.firma} onChange={e=>handle('firma', e.target.value)}
+                          className="input w-full border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-brand-yellow bg-white"/>
                       </div>
                     </div>
                   )}
                 </div>
               </div>
+
               <aside className="bg-white border border-gray-200 rounded-2xl p-5">
                 <div className="font-semibold">Podsumowanie</div>
                 <div className="mt-3 space-y-3 max-h-64 overflow-auto pr-2">
                   {cart.map(i => (
                     <div key={i.id} className="text-sm">
                       <div className="flex items-center justify-between">
-                        <span className="font-medium">
-                          {i.name} × {i.qty||1}
-                        </span>
+                        <span className="font-medium">{i.name} × {i.qty||1}</span>
                         <span className="font-bold">{currency(lineTotal(i))}</span>
                       </div>
                     </div>
@@ -928,10 +769,7 @@
                   <span className="font-bold">Do zapłaty</span>
                   <span className="font-extrabold">{currency(total)}</span>
                 </div>
-                <button
-                  onClick={submit}
-                  className="w-full mt-4 bg-brand-yellow text-gray-900 font-semibold rounded-xl px-4 py-3"
-                >
+                <button onClick={submit} className="w-full mt-4 bg-brand-yellow text-gray-900 font-semibold rounded-xl px-4 py-3">
                   Płatność online
                 </button>
               </aside>
@@ -960,17 +798,10 @@
     // --- Modal logowania / rejestracji ---
     const AuthModal = ({ open, onClose }) => {
       const [mode, setMode] = useState('login');
-      const [form, setForm] = useState({
-        email: '',
-        password: '',
-        confirm: '',
-      });
-
+      const [form, setForm] = useState({ email: '', password: '', confirm: '' });
       if (!open) return null;
 
-      const handleChange = (field, value) => {
-        setForm(prev => ({ ...prev, [field]: value }));
-      };
+      const handleChange = (field, value) => setForm(prev => ({ ...prev, [field]: value }));
 
       const handleSubmit = (e) => {
         e.preventDefault();
@@ -982,33 +813,13 @@
         onClose();
       };
 
-      const switchToRegister = () => {
-        setMode('register');
-        setForm({ email: '', password: '', confirm: '' });
-      };
-
-      const switchToLogin = () => {
-        setMode('login');
-        setForm({ email: '', password: '', confirm: '' });
-      };
+      const switchToRegister = () => { setMode('register'); setForm({ email: '', password: '', confirm: '' }); };
+      const switchToLogin = () => { setMode('login'); setForm({ email: '', password: '', confirm: '' }); };
 
       return (
-        <div
-          className="fixed inset-0 z-[90] bg-black/60 flex items-center justify-center px-4"
-          onClick={onClose}
-          role="dialog"
-          aria-modal="true"
-        >
-          <div
-            className="relative w-full max-w-md bg-white rounded-2xl shadow-glass border border-gray-200 p-6"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <button
-              type="button"
-              onClick={onClose}
-              className="absolute top-3 right-3 p-2 rounded-full bg-white border border-gray-200 shadow-soft hover:bg-gray-50"
-              aria-label="Zamknij okno logowania"
-            >
+        <div className="fixed inset-0 z-[90] bg-black/60 flex items-center justify-center px-4" onClick={onClose} role="dialog" aria-modal="true">
+          <div className="relative w-full max-w-md bg-white rounded-2xl shadow-glass border border-gray-200 p-6" onClick={(e) => e.stopPropagation()}>
+            <button type="button" onClick={onClose} className="absolute top-3 right-3 p-2 rounded-full bg-white border border-gray-200 shadow-soft hover:bg-gray-50" aria-label="Zamknij okno logowania">
               <i data-lucide="x" className="w-4 h-4"></i>
             </button>
 
@@ -1027,17 +838,9 @@
             </div>
 
             <div className="flex flex-col gap-2 mb-4">
-              <button
-                type="button"
-                className="btn flex w-full items-center justify-center gap-2 rounded-[10px] border border-[#ededef] bg:white px-3 py-2 text-sm font-medium hover:border-[#2d79f3] transition"
-              >
+              <button type="button" className="btn flex w-full items-center justify-center gap-2 rounded-[10px] border border-[#ededef] bg:white px-3 py-2 text-sm font-medium hover:border-[#2d79f3] transition">
                 <span className="inline-flex h-5 w-5 items-center justify-center">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 48 48"
-                    className="h-5 w-5"
-                    aria-hidden="true"
-                  >
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" className="h-5 h-5" aria-hidden="true">
                     <path fill="#EA4335" d="M24 9.5c3.54 0 6 1.54 7.38 2.84l5.42-5.42C33.64 3.58 29.3 1.5 24 1.5 14.88 1.5 7.09 6.98 3.66 14.72l6.77 5.26C11.86 14.33 17.38 9.5 24 9.5z"/>
                     <path fill="#4285F4" d="M46.5 24.5c0-1.57-.14-3.08-.41-4.5H24v9h12.7c-.55 2.92-2.22 5.4-4.73 7.07l7.64 5.93C43.86 38.63 46.5 32.1 46.5 24.5z"/>
                     <path fill="#FBBC05" d="M10.43 28.22a14.5 14.5 0 010-8.44L3.66 14.72A22.43 22.43 0 001.5 24.5c0 3.65.87 7.1 2.16 10.03l6.77-5.26z"/>
@@ -1048,21 +851,10 @@
                 <span>Zaloguj się przez Google</span>
               </button>
 
-              <button
-                type="button"
-                className="btn flex w-full items-center justify-center gap-2 rounded-[10px] border border-[#ededef] bg-white px-3 py-2 text-sm font-medium hover:border-[#2d79f3] transition"
-              >
+              <button type="button" className="btn flex w-full items-center justify-center gap-2 rounded-[10px] border border-[#ededef] bg-white px-3 py-2 text-sm font-medium hover:border-[#2d79f3] transition">
                 <span className="inline-flex h-5 w-5 items-center justify-center">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 384 512"
-                    className="h-5 w-5"
-                    aria-hidden="true"
-                  >
-                    <path
-                      fill="currentColor"
-                      d="M318.7 268.7c.5 55.4 48.6 73.8 49.1 74-0.4 1.3-7.7 26.3-25.4 52.1-15.3 22.4-31.2 44.7-56.3 45.1-24.6.4-32.5-14.6-60.6-14.6-28.1 0-37 14.2-60.4 15-24.3.9-42.8-24.2-58.1-46.5-31.6-45.9-55.8-129.6-23.4-186.2 16.2-28.2 45.1-46.1 76.5-46.5 23.9-.5 46.4 16 60.6 16 14.2 0 41.7-19.8 70.3-16.9 12 0.5 45.7 4.9 67.4 37-1.7 1-40.1 23.4-39.7 69.5zm-46.4-135.6c12.9-15.6 21.6-37.4 19.2-59.1-18.5.7-40.8 12.3-54 27.9-11.9 13.8-22.4 36-19.6 57.3 20.7 1.6 41.9-10.5 54.4-26.1z"
-                    />
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512" className="h-5 w-5" aria-hidden="true">
+                    <path fill="currentColor" d="M318.7 268.7c.5 55.4 48.6 73.8 49.1 74-0.4 1.3-7.7 26.3-25.4 52.1-15.3 22.4-31.2 44.7-56.3 45.1-24.6.4-32.5-14.6-60.6-14.6-28.1 0-37 14.2-60.4 15-24.3.9-42.8-24.2-58.1-46.5-31.6-45.9-55.8-129.6-23.4-186.2 16.2-28.2 45.1-46.1 76.5-46.5 23.9-.5 46.4 16 60.6 16 14.2 0 41.7-19.8 70.3-16.9 12 0.5 45.7 4.9 67.4 37-1.7 1-40.1 23.4-39.7 69.5zm-46.4-135.6c12.9-15.6 21.6-37.4 19.2-59.1-18.5.7-40.8 12.3-54 27.9-11.9 13.8-22.4 36-19.6 57.3 20.7 1.6 41.9-10.5 54.4-26.1z"/>
                   </svg>
                 </span>
                 <span>Zaloguj się przez Apple</span>
@@ -1080,81 +872,49 @@
             <form onSubmit={handleSubmit} className="space-y-3">
               <div>
                 <Label>Adres e-mail</Label>
-                <Input
-                  type="email"
-                  required
-                  value={form.email}
+                <Input type="email" required value={form.email}
                   onChange={(e) => handleChange('email', e.target.value)}
-                  placeholder="np. jan.kowalski@example.com"
-                  className="mt-1"
-                />
+                  placeholder="np. jan.kowalski@example.com" className="mt-1" />
               </div>
-
               <div>
                 <Label>Hasło</Label>
-                <Input
-                  type="password"
-                  required
-                  value={form.password}
+                <Input type="password" required value={form.password}
                   onChange={(e) => handleChange('password', e.target.value)}
-                  placeholder="Wpisz hasło"
-                  className="mt-1"
-                />
+                  placeholder="Wpisz hasło" className="mt-1" />
               </div>
 
               {mode === 'register' && (
                 <div>
                   <Label>Powtórz hasło</Label>
-                  <Input
-                    type="password"
-                    required
-                    value={form.confirm}
+                  <Input type="password" required value={form.confirm}
                     onChange={(e) => handleChange('confirm', e.target.value)}
-                    placeholder="Powtórz hasło"
-                    className="mt-1"
-                  />
+                    placeholder="Powtórz hasło" className="mt-1" />
                 </div>
               )}
 
               {mode === 'login' && (
                 <div className="flex justify-end">
-                  <button
-                    type="button"
-                    className="text-xs text-gray-500 hover:text-gray-700 underline underline-offset-2"
-                  >
+                  <button type="button" className="text-xs text-gray-500 hover:text-gray-700 underline underline-offset-2">
                     Zapomniałem hasła
                   </button>
                 </div>
               )}
 
-              <button
-                type="submit"
-                className="button-submit w-full mt-1 bg-gray-900 text-white font-semibold rounded-xl px-4 py-3 text-sm hover:bg-black"
-              >
+              <button type="submit" className="button-submit w-full mt-1 bg-gray-900 text-white font-semibold rounded-xl px-4 py-3 text-sm hover:bg-black">
                 {mode === 'login' ? 'Zaloguj się' : 'Zarejestruj się'}
               </button>
             </form>
 
             <div className="mt-4 text-xs text-gray-600 text-center">
               {mode === 'login' ? (
-                <>
-                  Nie masz jeszcze konta?{' '}
-                  <button
-                    type="button"
-                    onClick={switchToRegister}
-                    className="span font-semibold text-gray-900 underline underline-offset-2"
-                  >
+                <>Nie masz jeszcze konta?{' '}
+                  <button type="button" onClick={switchToRegister} className="span font-semibold text-gray-900 underline underline-offset-2">
                     Zarejestruj się
                   </button>
                 </>
               ) : (
-                <>
-                  Masz już konto?{' '}
-                  <button
-                    type="button"
-                    onClick={switchToLogin}
-                    className="span font-semibold text-gray-900 underline underline-offset-2"
-                  >
+                <>Masz już konto?{' '}
+                  <button type="button" onClick={switchToLogin} className="span font-semibold text-gray-900 underline underline-offset-2">
                     Zaloguj się
                   </button>
                 </>
@@ -1165,114 +925,61 @@
       );
     };
 
-    // --- Home (bez kreatora, tylko kategorie) ---
-    const Home = () => {
-      return (
-        <>
-          <Hero />
+    const Home = () => (
+      <>
+        <Hero />
 
-          <section id="kategorie" className="py-12 md:py-20 bg-gradient-to-b from-white to-brand-light">
-            <div className="max-w-6xl mx-auto px-4">
-              <SectionTitle
-                eyebrow="Menu"
-                title="Wybierz kategorię"
-                subtitle="Najpierw wybierz kategorię, potem dodawaj boxy i produkty do koszyka — w kilka kliknięć!"
-              />
-              <div className="mt-8 grid md:grid-cols-3 gap-6">
-                {PRODUCT_CATEGORIES.map(cat => (
-                  <CategoryCard key={cat.id} category={cat} />
-                ))}
+        <section id="kategorie" className="py-12 md:py-20 bg-gradient-to-b from-white to-brand-light">
+          <div className="max-w-6xl mx-auto px-4">
+            <SectionTitle eyebrow="Menu" title="Wybierz kategorię" subtitle="Najpierw wybierz kategorię, potem dodawaj boxy i produkty do koszyka — w kilka kliknięć!" />
+            <div className="mt-8 grid md:grid-cols-3 gap-6">
+              {PRODUCT_CATEGORIES.map(cat => <CategoryCard key={cat.id} category={cat} />)}
+            </div>
+          </div>
+        </section>
+
+        <section id="o-nas" className="py-12">
+          <div className="max-w-6xl mx-auto px-4 grid md:grid-cols-2 gap-10 items-center">
+            <img
+              className="w-full rounded-2xl shadow-soft"
+              loading="lazy"
+              src="https://images.unsplash.com/photo-1526318472351-c75fcf070305?q=80&w=1400&auto=format&fit=crop"
+              alt="Kuchnia Eatmi"
+            />
+            <div>
+              <SectionTitle title="Jakość & prostota" subtitle="Stawiamy na świeżość, przejrzystość i szybkie zamówienia." />
+              <ul className="mt-4 space-y-2 text-gray-700">
+                <li className="flex gap-3"><i data-lucide="check-circle" className="w-5 h-5 text-brand-yellow"></i>Świeże składniki każdego dnia</li>
+                <li className="flex gap-3"><i data-lucide="check-circle" className="w-5 h-5 text-brand-yellow"></i>Zamówienia online w kilka klików</li>
+                <li className="flex gap-3"><i data-lucide="check-circle" className="w-5 h-5 text-brand-yellow"></i>Dostawa na czas</li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        <section id="kontakt" className="py-12 bg-white">
+          <div className="max-w-6xl mx-auto px-4">
+            <SectionTitle title="Kontakt" subtitle="Masz pytania? Napisz do nas." />
+            <form className="max-w-xl mx-auto mt-8 bg-white border border-gray-200 rounded-2xl p-6 shadow-soft">
+              <div className="grid md:grid-cols-2 gap-4">
+                <input className="input w-full border border-gray-200 rounded-xl px-4 py-3" placeholder="Imię" />
+                <input className="input w-full border border-gray-200 rounded-xl px-4 py-3" placeholder="Email" />
               </div>
-            </div>
-          </section>
-
-          <section id="o-nas" className="py-12">
-            <div className="max-w-6xl mx-auto px-4 grid md:grid-cols-2 gap-10 items-center">
-              <img
-                className="w-full rounded-2xl shadow-soft"
-                loading="lazy"
-                src="https://images.unsplash.com/photo-1526318472351-c75fcf070305?q=80&w=1400&auto=format&fit=crop"
-                alt="Kuchnia Eatmi"
-              />
-              <div>
-                <SectionTitle
-                  title="Jakość & prostota"
-                  subtitle="Stawiamy na świeżość, przejrzystość i szybkie zamówienia."
-                />
-                <ul className="mt-4 space-y-2 text-gray-700">
-                  <li className="flex gap-3">
-                    <i data-lucide="check-circle" className="w-5 h-5 text-brand-yellow"></i>
-                    Świeże składniki każdego dnia
-                  </li>
-                  <li className="flex gap-3">
-                    <i data-lucide="check-circle" className="w-5 h-5 text-brand-yellow"></i>
-                    Zamówienia online w kilka klików
-                  </li>
-                  <li className="flex gap-3">
-                    <i data-lucide="check-circle" className="w-5 h-5 text-brand-yellow"></i>
-                    Dostawa na czas
-                  </li>
-                </ul>
-              </div>
-            </div>
-          </section>
-
-          <section id="kontakt" className="py-12 bg-white">
-            <div className="max-w-6xl mx-auto px-4">
-              <SectionTitle
-                title="Kontakt"
-                subtitle="Masz pytania? Napisz do nas."
-              />
-              <form className="max-w-xl mx-auto mt-8 bg-white border border-gray-200 rounded-2xl p-6 shadow-soft">
-                <div className="grid md:grid-cols-2 gap-4">
-                  <input className="input w-full border border-gray-200 rounded-xl px-4 py-3" placeholder="Imię" />
-                  <input className="input w-full border border-gray-200 rounded-xl px-4 py-3" placeholder="Email" />
-                </div>
-                <textarea
-                  className="input w-full border border-gray-200 rounded-xl px-4 py-3 mt-4"
-                  rows="4"
-                  placeholder="Wiadomość"
-                ></textarea>
-                <button
-                  type="button"
-                  className="mt-4 bg-gray-900 text-white rounded-xl px-5 py-3 font-semibold"
-                >
-                  Wyślij
-                </button>
-              </form>
-            </div>
-          </section>
-        </>
-      )
-    };
+              <textarea className="input w-full border border-gray-200 rounded-xl px-4 py-3 mt-4" rows="4" placeholder="Wiadomość"></textarea>
+              <button type="button" className="mt-4 bg-gray-900 text-white rounded-xl px-5 py-3 font-semibold">Wyślij</button>
+            </form>
+          </div>
+        </section>
+      </>
+    );
 
     const FloatingNav = () => (
       <nav className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 w-[min(720px,92%)] liquid border border-white/50 rounded-2xl shadow-glass">
         <ul className="grid grid-cols-4">
-          <li>
-            <a href="#kategorie" className="flex flex-col items-center py-3 text-sm font-medium">
-              <i data-lucide="shopping-bag" className="w-5 h-5"></i>
-              Menu
-            </a>
-          </li>
-          <li>
-            <a href="#/kategoria/boxy-sniadaniowe" className="flex flex-col items-center py-3 text-sm font-medium">
-              <i data-lucide="package-open" className="w-5 h-5"></i>
-              Śniadania
-            </a>
-          </li>
-          <li>
-            <a href="#/kategoria/boxy-lunchowe" className="flex flex-col items-center py-3 text-sm font-medium">
-              <i data-lucide="utensils-crossed" className="w-5 h-5"></i>
-              Lunch
-            </a>
-          </li>
-          <li>
-            <a href="#kontakt" className="flex flex-col items-center py-3 text-sm font-medium">
-              <i data-lucide="message-square" className="w-5 h-5"></i>
-              Kontakt
-            </a>
-          </li>
+          <li><a href="#kategorie" className="flex flex-col items-center py-3 text-sm font-medium"><i data-lucide="shopping-bag" className="w-5 h-5"></i>Menu</a></li>
+          <li><a href="#/kategoria/boxy-sniadaniowe" className="flex flex-col items-center py-3 text-sm font-medium"><i data-lucide="package-open" className="w-5 h-5"></i>Śniadania</a></li>
+          <li><a href="#/kategoria/boxy-lunchowe" className="flex flex-col items-center py-3 text-sm font-medium"><i data-lucide="utensils-crossed" className="w-5 h-5"></i>Lunch</a></li>
+          <li><a href="#kontakt" className="flex flex-col items-center py-3 text-sm font-medium"><i data-lucide="message-square" className="w-5 h-5"></i>Kontakt</a></li>
         </ul>
       </nav>
     );
@@ -1294,18 +1001,8 @@
       const isSafari = /Safari/i.test(ua) && !/Chrome/i.test(ua);
       const isChrome = /Chrome|CriOS/i.test(ua);
 
-      if (isIOS) {
-        return {
-          type: 'ios',
-          browser: isSafari ? 'safari' : (isChrome ? 'chrome' : 'other')
-        };
-      }
-      if (isAndroid) {
-        return {
-          type: 'android',
-          browser: isChrome ? 'chrome' : 'other'
-        };
-      }
+      if (isIOS) return { type: 'ios', browser: isSafari ? 'safari' : (isChrome ? 'chrome' : 'other') };
+      if (isAndroid) return { type: 'android', browser: isChrome ? 'chrome' : 'other' };
       return { type: 'other', browser: 'other' };
     };
 
@@ -1316,29 +1013,14 @@
       const isAndroid = platform?.type === 'android';
 
       const handleAddNow = () => {
-        try {
-          window.scrollTo({ top: 0, behavior: 'smooth' });
-        } catch {}
+        try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch {}
         onClose();
       };
 
       return (
-        <div
-          className="fixed inset-0 z-[85] bg-black/55 flex items-center justify-center px-4"
-          role="dialog"
-          aria-modal="true"
-          onClick={onClose}
-        >
-          <div
-            className="relative w-full max-w-md bg-white rounded-2xl shadow-glass border border-gray-200 p-5"
-            onClick={(e)=>e.stopPropagation()}
-          >
-            <button
-              type="button"
-              onClick={onClose}
-              className="absolute top-3 right-3 p-2 rounded-full bg-white border border-gray-200 shadow-soft hover:bg-gray-50"
-              aria-label="Zamknij okno"
-            >
+        <div className="fixed inset-0 z-[85] bg-black/55 flex items-center justify-center px-4" role="dialog" aria-modal="true" onClick={onClose}>
+          <div className="relative w-full max-w-md bg-white rounded-2xl shadow-glass border border-gray-200 p-5" onClick={(e)=>e.stopPropagation()}>
+            <button type="button" onClick={onClose} className="absolute top-3 right-3 p-2 rounded-full bg-white border border-gray-200 shadow-soft hover:bg-gray-50" aria-label="Zamknij okno">
               <span className="text-lg leading-none">×</span>
             </button>
 
@@ -1398,18 +1080,10 @@
             </div>
 
             <div className="mt-5 flex flex-col sm:flex-row gap-3 sm:justify-end">
-              <button
-                type="button"
-                onClick={onClose}
-                className="w-full sm:w-auto px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold text-gray-700 bg-white"
-              >
+              <button type="button" onClick={onClose} className="w-full sm:w-auto px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold text-gray-700 bg-white">
                 Nie teraz
               </button>
-              <button
-                type="button"
-                onClick={handleAddNow}
-                className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-gray-900 text-white text-sm font-semibold"
-              >
+              <button type="button" onClick={handleAddNow} className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-gray-900 text-white text-sm font-semibold">
                 Pokaż pasek i dodaj
               </button>
             </div>
@@ -1418,7 +1092,6 @@
       );
     };
 
-    // --- Router ---
     const Router = () => {
       const [route, setRoute] = useState(window.location.hash || '#/');
       useEffect(()=>{
@@ -1442,9 +1115,7 @@
       const [a2hsOpen, setA2hsOpen] = useState(false);
       const [platform, setPlatform] = useState({ type: 'other', browser: 'other' });
 
-      useEffect(() => {
-        lucide.createIcons();
-      }, [authOpen]);
+      useEffect(() => { lucide.createIcons(); }, [authOpen]);
 
       useEffect(() => {
         if (!isMobileDevice()) return;
@@ -1456,18 +1127,13 @@
         const detected = detectPlatform();
         setPlatform(detected);
 
-        const t = setTimeout(() => {
-          setA2hsOpen(true);
-        }, 2500);
-
+        const t = setTimeout(() => setA2hsOpen(true), 2500);
         return () => clearTimeout(t);
       }, []);
 
       const handleCloseA2hs = () => {
         setA2hsOpen(false);
-        try {
-          localStorage.setItem('eatmi-a2hs-dismissed', 'true');
-        } catch {}
+        try { localStorage.setItem('eatmi-a2hs-dismissed', 'true'); } catch {}
       };
 
       return (
