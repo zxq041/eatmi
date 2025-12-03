@@ -45,15 +45,13 @@ const PAYU_CLIENT_SECRET =
 //  TU WSTAWIASZ CLIENT SECRET (najlepiej w .env)
 
 // PROD (PL/EU):
-const PAYU_BASE = "https://secure.payu.com";
+const PAYU_BASE = "https://secure.snd.payu.com";
 // SANDBOX (jeśli testujesz):
 // const PAYU_BASE = "https://secure.snd.payu.com";
 
-// Twoje adresy (zmień na swoje prawdziwe domeny)
-const CONTINUE_URL =
-  process.env.PAYU_CONTINUE_URL || "https://twojadomena.pl/#/success";
-const NOTIFY_URL =
-  process.env.PAYU_NOTIFY_URL || "https://twojadomena.pl/api/payu/notify";
+const CONTINUE_URL = "https://www.eatmi.pl/#/success";
+const NOTIFY_URL   = "https://www.eatmi.pl/api/payu/notify";
+
 
 // ================== SIMPLE ORDERS STORE ==================
 const ORDERS_FILE = path.join(__dirname, "orders.json");
@@ -242,4 +240,5 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log("eatmi backend running on port", PORT);
 });
+
 
