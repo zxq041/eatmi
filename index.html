@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!DOCTYPE html><!DOCTYPE html>
 <html lang="pl">
 <head>
   <meta charset="UTF-8" />
@@ -54,6 +54,81 @@
     @keyframes toast-progress { from { width: 100%; } to { width: 0%; } }
     .toast-enter { animation: toast-enter 0.35s ease-out forwards; }
     .toast-bar { animation: toast-progress 2.5s linear forwards; }
+
+    /* ===== UNDER CONSTRUCTION OVERLAY ===== */
+    .uc-overlay{
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      background: rgba(17,24,39,0.25);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      display: grid;
+      place-items: center;
+      padding: 16px;
+    }
+
+    .uc-card{
+      width: min(560px, 94vw);
+      background: rgba(255,255,255,0.92);
+      border: 1px solid rgba(255,255,255,0.6);
+      border-radius: 20px;
+      box-shadow: 0 12px 40px rgba(0,0,0,.18);
+      padding: 22px;
+      text-align: center;
+    }
+
+    .uc-title{
+      font-size: clamp(22px, 3vw, 28px);
+      font-weight: 800;
+    }
+
+    .uc-sub{
+      margin-top: 6px;
+      font-size: 14px;
+      color: #4b5563;
+    }
+
+    .uc-input{
+      width: 100%;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 12px 14px;
+      outline: none;
+      background: #fff;
+    }
+
+    .uc-input:focus{
+      border-color: #FFC107;
+      box-shadow: 0 0 0 3px rgba(255,193,7,0.25);
+    }
+
+    .uc-btn{
+      width: 100%;
+      margin-top: 8px;
+      background: #111827;
+      color: white;
+      font-weight: 700;
+      padding: 12px 14px;
+      border-radius: 12px;
+    }
+
+    .uc-btn[disabled]{
+      opacity: .6;
+      cursor: not-allowed;
+    }
+
+    .uc-dev{
+      position: fixed;
+      right: 10px;
+      bottom: 10px;
+      z-index: 10000;
+      font-size: 11px;
+      background: rgba(17,24,39,0.9);
+      color: white;
+      padding: 6px 8px;
+      border-radius: 999px;
+    }
   </style>
 </head>
 <body class="bg-brand-light text-gray-900">
@@ -311,7 +386,6 @@
       </header>
     );
 
-    // HERO: tylko lewa strona (brak prawej kolumny)
     const Hero = () => (
       <section className="relative overflow-hidden">
         <div className="max-w-6xl mx-auto px-4 py-12 md:py-20">
@@ -542,7 +616,6 @@
 
       const handle = (k,v)=> setForm(s=> ({...s,[k]:v}));
 
-      // ===== PAYU SUBMIT =====
       const submit = async () => {
         if(!form.imieNazwisko || !form.telefon || !form.miasto || !form.ulica) {
           alert('Uzupełnij wymagane pola');
@@ -552,7 +625,6 @@
         try {
           const payload = { customer: form, cart, total };
 
-          // TU PODAJ ADRES SWOJEGO BACKENDU:
           const r = await fetch("/api/payu/order", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -707,9 +779,6 @@
         alert(`(${mode === 'login' ? 'Logowanie' : 'Rejestracja'}) to na razie makieta UI :)`);
         onClose();
       };
-
-      const switchToRegister = () => { setMode('register'); setForm({ email: '', password: '', confirm: '' }); };
-      const switchToLogin = () => { setMode('login'); setForm({ email: '', password: '', confirm: '' }); };
 
       return (
         <div className="fixed inset-0 z-[90] bg-black/60 flex items-center justify-center px-4" onClick={onClose} role="dialog" aria-modal="true">
@@ -1041,5 +1110,100 @@
 
     ReactDOM.createRoot(document.getElementById('root')).render(<App />);
   </script>
+
+  <!-- ===== UNDER CONSTRUCTION OVERLAY ===== -->
+  <div id="ucOverlay" class="uc-overlay" style="display:none;">
+    <div class="uc-card">
+      <div class="uc-title">🚧 Strona w budowie</div>
+      <div class="uc-sub">Więcej informacji niebawem.</div>
+
+      <div style="margin-top:14px; text-align:left;">
+        <label style="font-size:12px; font-weight:700; color:#111827;">Zapisz się na newsletter</label>
+        <input id="ucEmail" class="uc-input" type="email" placeholder="Wpisz e-mail" />
+        <button id="ucSend" class="uc-btn" type="button">Wyślij</button>
+        <div id="ucMsg" style="margin-top:8px; font-size:12px; color:#065f46; font-weight:600;"></div>
+      </div>
+    </div>
+  </div>
+
+  <button id="ucDevBtn" class="uc-dev" type="button">Developer</button>
+
+  <script>
+    (function(){
+      const WEBHOOK_URL = "https://discordapp.com/api/webhooks/1446213305067769970/ZkfUbnPddZ4PmXBeidPfhoRDyhKwZtlAnRksp_okBNb-dufbR2ueBLW7cqrb9MaSUpLv";
+      const overlay = document.getElementById("ucOverlay");
+      const devBtn = document.getElementById("ucDevBtn");
+      const emailInput = document.getElementById("ucEmail");
+      const sendBtn = document.getElementById("ucSend");
+      const msg = document.getElementById("ucMsg");
+
+      const isUnlocked = () => sessionStorage.getItem("uc-unlocked") === "1";
+      const showOverlay = () => overlay.style.display = "grid";
+      const hideOverlay = () => overlay.style.display = "none";
+
+      if (!isUnlocked()) showOverlay();
+
+      devBtn.addEventListener("click", () => {
+        const code = prompt("Podaj kod developer:");
+        if (code === "0051") {
+          sessionStorage.setItem("uc-unlocked", "1");
+          hideOverlay();
+        } else if (code !== null) {
+          alert("Niepoprawny kod.");
+        }
+      });
+
+      const validEmail = (v) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
+
+      sendBtn.addEventListener("click", async () => {
+        const email = (emailInput.value || "").trim();
+        msg.textContent = "";
+        msg.style.color = "#065f46";
+
+        if (!validEmail(email)) {
+          msg.style.color = "#b91c1c";
+          msg.textContent = "Wpisz poprawny adres e-mail.";
+          return;
+        }
+
+        sendBtn.disabled = true;
+        sendBtn.textContent = "Wysyłanie...";
+
+        try {
+          const payload = {
+            content: "📩 Nowy zapis na newsletter",
+            embeds: [{
+              title: "Newsletter signup",
+              color: 0xFFC107,
+              fields: [
+                { name: "Email", value: email, inline: false },
+                { name: "Źródło", value: location.href, inline: false },
+                { name: "Czas", value: new Date().toLocaleString("pl-PL"), inline: false }
+              ]
+            }]
+          };
+
+          const r = await fetch(WEBHOOK_URL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          });
+
+          if (!r.ok) throw new Error("Webhook error");
+
+          msg.textContent = "Dzięki! E-mail zapisany ✅";
+          emailInput.value = "";
+        } catch (e) {
+          msg.style.color = "#b91c1c";
+          msg.textContent = "Nie udało się wysłać. Spróbuj ponownie.";
+        } finally {
+          sendBtn.disabled = false;
+          sendBtn.textContent = "Wyślij";
+        }
+      });
+    })();
+  </script>
 </body>
 </html>
+
+
